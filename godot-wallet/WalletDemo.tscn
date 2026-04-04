@@ -32,6 +32,7 @@ layout_mode = 2
 text = "GalaChain Gaming Wallet"
 
 [node name="StatusLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1219997940]
+unique_name_in_owner = true
 layout_mode = 2
 
 [node name="WalletInfo" type="PanelContainer" parent="MarginContainer/VBoxContainer" unique_id=1678201249]
@@ -52,6 +53,7 @@ layout_mode = 2
 text = "Address:"
 
 [node name="AddressValueLabel" type="Label" parent="MarginContainer/VBoxContainer/WalletInfo/VBoxContainer/AddressRow" unique_id=2122182302]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "No Wallet Loaded"
@@ -60,10 +62,12 @@ text = "No Wallet Loaded"
 layout_mode = 2
 
 [node name="CopyAddressButton" type="Button" parent="MarginContainer/VBoxContainer/WalletInfo/VBoxContainer/ButtonsRow" unique_id=2102579457]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Copy Address"
 
 [node name="RefreshBalancesButton" type="Button" parent="MarginContainer/VBoxContainer/WalletInfo/VBoxContainer/ButtonsRow" unique_id=1056145538]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Refresh Balances"
 
@@ -79,18 +83,22 @@ layout_mode = 2
 text = "Actions"
 
 [node name="CreateWalletButton" type="Button" parent="MarginContainer/VBoxContainer/ActionsPanel/VBoxContainer" unique_id=483704845]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Create Wallet"
 
 [node name="ImportWalletButton" type="Button" parent="MarginContainer/VBoxContainer/ActionsPanel/VBoxContainer" unique_id=1306237181]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Import Wallet"
 
 [node name="UnlockButton" type="Button" parent="MarginContainer/VBoxContainer/ActionsPanel/VBoxContainer" unique_id=1106759180]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Unlock"
 
 [node name="LockButton" type="Button" parent="MarginContainer/VBoxContainer/ActionsPanel/VBoxContainer" unique_id=395604353]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Lock	"
 
@@ -105,7 +113,8 @@ layout_mode = 2
 layout_mode = 2
 text = "Balances"
 
-[node name="Balances" type="ItemList" parent="MarginContainer/VBoxContainer/BalancesPanel/VBoxContainer" unique_id=79948741]
+[node name="BalancesList" type="ItemList" parent="MarginContainer/VBoxContainer/BalancesPanel/VBoxContainer" unique_id=79948741]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
@@ -122,6 +131,7 @@ layout_mode = 2
 text = "Log"
 
 [node name="LogOutput" type="RichTextLabel" parent="MarginContainer/VBoxContainer/LogsPanel/VBoxContainer" unique_id=1186709110]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 focus_mode = 2

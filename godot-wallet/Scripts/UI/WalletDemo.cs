@@ -10,6 +10,12 @@ public partial class WalletDemo : Control
 	private Label _addressValueLabel = null!;
 	private ItemList _balancesList = null!;
 	private RichTextLabel _logOutput = null!;
+	private Button _importWalletButton = null!;
+	private Button _unlockButton = null!;
+	private Button _lockButton = null!;
+	private Button _copyAddressButton = null!;
+	private Button _refreshBalancesButton = null!;
+	private Button _createWalletButton = null!;
 
 	public override void _Ready()
 	{
@@ -17,13 +23,19 @@ public partial class WalletDemo : Control
 		_addressValueLabel = GetNode<Label>("%AddressValueLabel");
 		_balancesList = GetNode<ItemList>("%BalancesList");
 		_logOutput = GetNode<RichTextLabel>("%LogOutput");
+		_createWalletButton = GetNode<Button>("%CreateWalletButton");
+		_importWalletButton = GetNode<Button>("%ImportWalletButton");
+		_unlockButton = GetNode<Button>("%UnlockButton");
+		_lockButton = GetNode<Button>("%LockButton");
+		_copyAddressButton = GetNode<Button>("%CopyAddressButton");
+		_refreshBalancesButton = GetNode<Button>("%RefreshBalancesButton");
 
-		GetNode<Button>("%CreateWalletButton").Pressed += OnCreateWalletPressed;
-		GetNode<Button>("%ImportWalletButton").Pressed += OnImportWalletPressed;
-		GetNode<Button>("%UnlockButton").Pressed += OnUnlockPressed;
-		GetNode<Button>("%LockButton").Pressed += OnLockPressed;
-		GetNode<Button>("%CopyAddressButton").Pressed += OnCopyAddressPressed;
-		GetNode<Button>("%RefreshBalancesButton").Pressed += OnRefreshBalancesPressed;
+		_createWalletButton.Pressed += OnCreateWalletPressed;
+		_importWalletButton.Pressed += OnImportWalletPressed;
+		_unlockButton.Pressed += OnUnlockPressed;
+		_lockButton.Pressed += OnLockPressed;
+		_copyAddressButton.Pressed += OnCopyAddressPressed;
+		_refreshBalancesButton.Pressed += OnRefreshBalancesPressed;
 
 		RefreshUi();
 		Log("Wallet demo ready.");
@@ -78,32 +90,22 @@ public partial class WalletDemo : Control
 
 	private void RefreshUi()
 	{
+		bool hasWallet = _walletService.HasWallet();
+		bool isUnlocked = _walletService.IsUnlocked();
+		
 		_statusLabel.Text = BuildStatusText();
-		_addressValueLabel.Text = _walletService.HasWallet()
+		_addressValueLabel.Text = hasWallet
 			? _walletService.GetAddress()
 			: "No wallet loaded";
 
-		_balancesList.Clear();
+		_createWalletButton.Disabled = hasWallet;
+		_importWalletButton.Disabled = hasWallet;
+		_unlockButton.Disabled = !hasWallet || isUnlocked;
+		_lockButton.Disabled = !hasWallet || !isUnlocked;
+		_copyAddressButton.Disabled = !hasWallet || !isUnlocked;
+		_refreshBalancesButton.Disabled = !hasWallet || !isUnlocked;
 
-		if (_walletService.HasWallet() && _walletService.IsUnlocked())
-		{
-			List<TokenBalanceModel> balances = _walletService.GetBalances();
-			if (balances.Count == 0)
-			{
-				_balancesList.AddItem("No balances");
-			}
-			else
-			{
-				foreach (var balance in balances)
-				{
-					_balancesList.AddItem($"{balance.Symbol}: {balance.DisplayAmount}");
-				}
-			}
-		}
-		else
-		{
-			_balancesList.AddItem("Wallet locked or unavailable");
-		}
+		RefreshBalances();
 	}
 
 	private string BuildStatusText()
@@ -115,6 +117,36 @@ public partial class WalletDemo : Control
 			? "Status: Wallet unlocked"
 			: "Status: Wallet locked";
 	}
+	
+private void RefreshBalances()
+{
+	_balancesList.Clear();
+
+	if (!_walletService.HasWallet())
+	{
+		_balancesList.AddItem("No wallet loaded");
+		return;
+	}
+
+	if (!_walletService.IsUnlocked())
+	{
+		_balancesList.AddItem("Wallet locked");
+		return;
+	}
+
+	var balances = _walletService.GetBalances();
+
+	if (balances.Count == 0)
+	{
+		_balancesList.AddItem("No balances");
+		return;
+	}
+
+	foreach (var balance in balances)
+	{
+		_balancesList.AddItem($"{balance.Symbol}: {balance.DisplayAmount}");
+	}
+}
 
 	private void Log(string message)
 	{
