@@ -1,0 +1,133 @@
+[gd_scene format=3 uid="uid://fv60ouqa08tn"]
+
+[ext_resource type="Script" uid="uid://c2r21b632lfrx" path="res://Scripts/UI/WalletDemo.cs" id="1_gtf1u"]
+
+[node name="WalletDemo" type="Control" unique_id=1618572581]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_gtf1u")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1154402397]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1227468517]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1233036960]
+layout_mode = 2
+text = "GalaChain Gaming Wallet"
+
+[node name="StatusLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1219997940]
+layout_mode = 2
+
+[node name="WalletInfo" type="PanelContainer" parent="MarginContainer/VBoxContainer" unique_id=1678201249]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/WalletInfo" unique_id=1391230576]
+layout_mode = 2
+
+[node name="WalletSectionLabel" type="Label" parent="MarginContainer/VBoxContainer/WalletInfo/VBoxContainer" unique_id=2022025243]
+layout_mode = 2
+text = "Wallet"
+
+[node name="AddressRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/WalletInfo/VBoxContainer" unique_id=2026538580]
+layout_mode = 2
+
+[node name="AddressTitleLabel" type="Label" parent="MarginContainer/VBoxContainer/WalletInfo/VBoxContainer/AddressRow" unique_id=728861126]
+layout_mode = 2
+text = "Address:"
+
+[node name="AddressValueLabel" type="Label" parent="MarginContainer/VBoxContainer/WalletInfo/VBoxContainer/AddressRow" unique_id=2122182302]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "No Wallet Loaded"
+
+[node name="ButtonsRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/WalletInfo/VBoxContainer" unique_id=534545646]
+layout_mode = 2
+
+[node name="CopyAddressButton" type="Button" parent="MarginContainer/VBoxContainer/WalletInfo/VBoxContainer/ButtonsRow" unique_id=2102579457]
+layout_mode = 2
+text = "Copy Address"
+
+[node name="RefreshBalancesButton" type="Button" parent="MarginContainer/VBoxContainer/WalletInfo/VBoxContainer/ButtonsRow" unique_id=1056145538]
+layout_mode = 2
+text = "Refresh Balances"
+
+[node name="ActionsPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer" unique_id=1252338106]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ActionsPanel" unique_id=1858728598]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ActionSectionLabel" type="Label" parent="MarginContainer/VBoxContainer/ActionsPanel/VBoxContainer" unique_id=800111759]
+layout_mode = 2
+text = "Actions"
+
+[node name="CreateWalletButton" type="Button" parent="MarginContainer/VBoxContainer/ActionsPanel/VBoxContainer" unique_id=483704845]
+layout_mode = 2
+text = "Create Wallet"
+
+[node name="ImportWalletButton" type="Button" parent="MarginContainer/VBoxContainer/ActionsPanel/VBoxContainer" unique_id=1306237181]
+layout_mode = 2
+text = "Import Wallet"
+
+[node name="UnlockButton" type="Button" parent="MarginContainer/VBoxContainer/ActionsPanel/VBoxContainer" unique_id=1106759180]
+layout_mode = 2
+text = "Unlock"
+
+[node name="LockButton" type="Button" parent="MarginContainer/VBoxContainer/ActionsPanel/VBoxContainer" unique_id=395604353]
+layout_mode = 2
+text = "Lock	"
+
+[node name="BalancesPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer" unique_id=1755233513]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/BalancesPanel" unique_id=1022992210]
+layout_mode = 2
+
+[node name="BalancesSectionLabel" type="Label" parent="MarginContainer/VBoxContainer/BalancesPanel/VBoxContainer" unique_id=378614182]
+layout_mode = 2
+text = "Balances"
+
+[node name="Balances" type="ItemList" parent="MarginContainer/VBoxContainer/BalancesPanel/VBoxContainer" unique_id=79948741]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="LogsPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer" unique_id=2114385992]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/LogsPanel" unique_id=767775299]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LogSectionLabel" type="Label" parent="MarginContainer/VBoxContainer/LogsPanel/VBoxContainer" unique_id=830624812]
+layout_mode = 2
+text = "Log"
+
+[node name="LogOutput" type="RichTextLabel" parent="MarginContainer/VBoxContainer/LogsPanel/VBoxContainer" unique_id=1186709110]
+layout_mode = 2
+size_flags_vertical = 3
+focus_mode = 2
+scroll_following = true
+selection_enabled = true
+
+[node name="ImportPrivateKey" type="ConfirmationDialog" parent="." unique_id=1624659956]
+
+[node name="SimpleMessage" type="AcceptDialog" parent="." unique_id=1829777973]
