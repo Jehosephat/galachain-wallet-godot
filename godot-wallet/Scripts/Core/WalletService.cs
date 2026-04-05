@@ -7,12 +7,14 @@ using Nethereum.Web3.Accounts;
 public class WalletService : IWalletService
 {
 	private readonly WalletState _state = new();
+	private readonly PasswordCryptoService _crypto = new();
+	private readonly IWalletStorage _storage = new FileWalletStorage();
 
 	public bool HasWallet() => _state.HasWallet;
 	public bool IsUnlocked() => _state.IsUnlocked;
 	public string GetAddress() => _state.Address;
 
-	public void CreateWallet()
+	public void CreateWallet(string password)
 	{
 		var wallet = new Wallet(Wordlist.English, WordCount.Twelve);
 		var account = wallet.GetAccount(0);
@@ -32,9 +34,17 @@ public class WalletService : IWalletService
 			new TokenBalanceModel { Symbol = "GALA", DisplayAmount = "125.00" },
 			new TokenBalanceModel { Symbol = "TREZ", DisplayAmount = "42.00" }
 		};
+
+		var record = _crypto.EncryptSecret(
+			_state.Address,
+			WalletSecretType.Mnemonic,
+			mnemonic,
+			password);
+
+		_storage.Save(record);
 	}
 
-	public void ImportPrivateKey(string privateKey)
+	public void ImportPrivateKey(string privateKey, string password)
 	{
 		var normalizedPrivateKey = NormalizePrivateKey(privateKey);
 		var account = new Account(normalizedPrivateKey);
@@ -49,18 +59,45 @@ public class WalletService : IWalletService
 		_state.Address = account.Address;
 
 		_state.Balances = new List<TokenBalanceModel>();
+
+		var record = _crypto.EncryptSecret(
+			_state.Address,
+			WalletSecretType.PrivateKey,
+			normalizedPrivateKey,
+			password);
+
+		_storage.Save(record);
 	}
 
 	public bool Unlock(string password)
 	{
-		if (!_state.HasWallet) return false;
-		_state.IsUnlocked = true;
-		return true;
+		var record = _storage.Load();
+		if (record == null)
+			return false;
+
+		try
+		{
+			var payload = _crypto.DecryptSecret(record, password);
+
+			_state.HasWallet = true;
+			_state.IsUnlocked = true;
+			_state.Address = record.Address;
+			_state.Mnemonic = payload.SecretType == WalletSecretType.Mnemonic ? payload.Secret : "";
+			_state.PrivateKey = payload.SecretType == WalletSecretType.PrivateKey ? payload.Secret : "";
+
+			return true;
+		}
+		catch
+		{
+			return false;
+		}
 	}
 
 	public void Lock()
 	{
 		_state.IsUnlocked = false;
+		_state.PrivateKey = "";
+		_state.Mnemonic = "";
 	}
 
 	public List<TokenBalanceModel> GetBalances()
@@ -85,5 +122,18 @@ public class WalletService : IWalletService
 		}
 
 		return trimmed;
+	}
+	
+	public void LoadWalletMetadataIfPresent()
+	{
+		var record = _storage.Load();
+		if (record == null)
+			return;
+
+		_state.HasWallet = true;
+		_state.IsUnlocked = false;
+		_state.Address = record.Address;
+		_state.Mnemonic = "";
+		_state.PrivateKey = "";
 	}
 }

@@ -19,9 +19,16 @@ public partial class WalletDemo : Control
 	private AcceptDialog _simpleMessageDialog = null!;
 	private ConfirmationDialog _importPrivateKeyDialog = null!;
 	private LineEdit _importPrivateKeyInput = null!;
+	private ConfirmationDialog _passwordDialog = null!;
+	private Label _passwordDialogLabel = null!;
+	private LineEdit _passwordInput = null!;
+
+	private PendingPasswordAction _pendingPasswordAction = PendingPasswordAction.None;
+	private string _pendingImportPrivateKey = "";
 
 	public override void _Ready()
 	{
+		GD.Print(OS.GetUserDataDir());
 		_statusLabel = GetNode<Label>("%StatusLabel");
 		_addressValueLabel = GetNode<Label>("%AddressValueLabel");
 		_balancesList = GetNode<ItemList>("%BalancesList");
@@ -34,7 +41,9 @@ public partial class WalletDemo : Control
 		_refreshBalancesButton = GetNode<Button>("%RefreshBalancesButton");
 		_simpleMessageDialog = GetNode<AcceptDialog>("%SimpleMessageDialog");
 		_importPrivateKeyDialog = GetNode<ConfirmationDialog>("%ImportPrivateKeyDialog");
-		_importPrivateKeyInput = GetNode<LineEdit>("%ImportPrivateKeyInput");
+		_importPrivateKeyInput = GetNode<LineEdit>("%ImportPrivateKeyInput");_passwordDialog = GetNode<ConfirmationDialog>("%PasswordDialog");
+		_passwordDialogLabel = GetNode<Label>("%PasswordDialogLabel");
+		_passwordInput = GetNode<LineEdit>("%PasswordInput");
 
 		_createWalletButton.Pressed += OnCreateWalletPressed;
 		_importWalletButton.Pressed += OnImportWalletPressed;
@@ -43,6 +52,9 @@ public partial class WalletDemo : Control
 		_copyAddressButton.Pressed += OnCopyAddressPressed;
 		_refreshBalancesButton.Pressed += OnRefreshBalancesPressed;
 		_importPrivateKeyDialog.Confirmed += OnImportPrivateKeyConfirmed;
+		_passwordDialog.Confirmed += OnPasswordDialogConfirmed;
+		
+		_walletService.LoadWalletMetadataIfPresent();
 
 		RefreshUi();
 		Log("Wallet demo ready.");
@@ -50,22 +62,10 @@ public partial class WalletDemo : Control
 
 	private void OnCreateWalletPressed()
 	{
-		_walletService.CreateWallet();
-		RefreshUi();
-		
-		var phrase = _walletService.ConsumePendingRecoveryPhrase();
-		if(!string.IsNullOrWhiteSpace(phrase))
-		{
-			_simpleMessageDialog.Title = "Recovery Phrase";
-			_simpleMessageDialog.DialogText =
-				"Write this down and store it safely.\n\n" +
-				"This is the only time it will be shown:\n\n" +
-				phrase;
-				
-			_simpleMessageDialog.PopupCentered();
-		}
-		
-		//Log("Created wallet.");
+		OpenPasswordDialog(
+			PendingPasswordAction.CreateWallet,
+	        "Choose a password to encrypt this wallet."
+		);
 	}
 	
 	private void OnImportWalletPressed()
@@ -76,16 +76,17 @@ public partial class WalletDemo : Control
 
 	private void OnUnlockPressed()
 	{
-		bool ok = _walletService.Unlock("dummy-password");
-		Log(ok ? "Wallet unlocked." : "Unlock failed.");
-		RefreshUi();
+		OpenPasswordDialog(
+			PendingPasswordAction.UnlockWallet,
+	        "Enter your wallet password to unlock."
+		);
 	}
 
 	private void OnLockPressed()
 	{
 		_walletService.Lock();
-		Log("Wallet locked.");
 		RefreshUi();
+		Log("Wallet locked.");
 	}
 
 	private void OnCopyAddressPressed()
@@ -117,17 +118,73 @@ public partial class WalletDemo : Control
 			return;
 		}
 
+		_pendingImportPrivateKey = privateKey;
+
+		OpenPasswordDialog(
+			PendingPasswordAction.ImportWallet,
+	        "Enter a password to encrypt the imported wallet."
+		);
+	}
+	
+	private void OnPasswordDialogConfirmed()
+	{
+		string password = _passwordInput.Text;
+
+		if (string.IsNullOrWhiteSpace(password))
+		{
+			Log("Password entry was empty.");
+			return;
+		}
+
 		try
 		{
-			_walletService.ImportPrivateKey(privateKey);
-			RefreshUi();
-			Log("Imported wallet from private key.");
+			switch (_pendingPasswordAction)
+			{
+				case PendingPasswordAction.CreateWallet:
+					_walletService.CreateWallet(password);
+					RefreshUi();
 
-			_importPrivateKeyInput.Text = "";
+					var phrase = _walletService.ConsumePendingRecoveryPhrase();
+					if (!string.IsNullOrWhiteSpace(phrase))
+					{
+						_simpleMessageDialog.Title = "Recovery Phrase";
+						_simpleMessageDialog.DialogText =
+							"Write this down and store it safely.\n\n" +
+							"This is the only time it will be shown:\n\n" +
+							phrase;
+
+						_simpleMessageDialog.PopupCentered();
+					}
+
+					Log("Created wallet and saved encrypted wallet file.");
+					break;
+
+				case PendingPasswordAction.ImportWallet:
+					_walletService.ImportPrivateKey(_pendingImportPrivateKey, password);
+					_pendingImportPrivateKey = "";
+					RefreshUi();
+					Log("Imported wallet and saved encrypted wallet file.");
+					break;
+
+				case PendingPasswordAction.UnlockWallet:
+					bool ok = _walletService.Unlock(password);
+					RefreshUi();
+					Log(ok ? "Wallet unlocked." : "Unlock failed.");
+					break;
+
+				default:
+					Log("No password action was pending.");
+					break;
+			}
 		}
 		catch (System.Exception ex)
 		{
-			Log($"Import failed: {ex.Message}");
+			Log($"Password action failed: {ex.Message}");
+		}
+		finally
+		{
+			_pendingPasswordAction = PendingPasswordAction.None;
+			_passwordInput.Text = "";
 		}
 	}
 
@@ -135,11 +192,20 @@ public partial class WalletDemo : Control
 	{
 		bool hasWallet = _walletService.HasWallet();
 		bool isUnlocked = _walletService.IsUnlocked();
-		
-		_statusLabel.Text = BuildStatusText();
-		_addressValueLabel.Text = hasWallet
-			? _walletService.GetAddress()
-			: "No wallet loaded";
+
+		if (hasWallet)
+		{
+			_statusLabel.Text = isUnlocked
+				? "Status: Wallet unlocked"
+				: "Status: Wallet locked";
+
+			_addressValueLabel.Text = _walletService.GetAddress();
+		}
+		else
+		{
+			_statusLabel.Text = "Status: No wallet";
+			_addressValueLabel.Text = "No wallet loaded";
+		}
 
 		_createWalletButton.Disabled = hasWallet;
 		_importWalletButton.Disabled = hasWallet;
@@ -160,39 +226,49 @@ public partial class WalletDemo : Control
 			? "Status: Wallet unlocked"
 			: "Status: Wallet locked";
 	}
-	
-private void RefreshBalances()
-{
-	_balancesList.Clear();
-
-	if (!_walletService.HasWallet())
+		
+	private void RefreshBalances()
 	{
-		_balancesList.AddItem("No wallet loaded");
-		return;
+		_balancesList.Clear();
+
+		if (!_walletService.HasWallet())
+		{
+			_balancesList.AddItem("No wallet loaded");
+			return;
+		}
+
+		if (!_walletService.IsUnlocked())
+		{
+			_balancesList.AddItem("Wallet locked");
+			return;
+		}
+
+		var balances = _walletService.GetBalances();
+
+		if (balances.Count == 0)
+		{
+			_balancesList.AddItem("No balances");
+			return;
+		}
+
+		foreach (var balance in balances)
+		{
+			_balancesList.AddItem($"{balance.Symbol}: {balance.DisplayAmount}");
+		}
 	}
 
-	if (!_walletService.IsUnlocked())
-	{
-		_balancesList.AddItem("Wallet locked");
-		return;
+	private void Log(string message){
+		{
+			_logOutput.AppendText($"{message}\n");
+		}
 	}
 
-	var balances = _walletService.GetBalances();
-
-	if (balances.Count == 0)
+	private void OpenPasswordDialog(PendingPasswordAction action, string prompt)
 	{
-		_balancesList.AddItem("No balances");
-		return;
-	}
-
-	foreach (var balance in balances)
-	{
-		_balancesList.AddItem($"{balance.Symbol}: {balance.DisplayAmount}");
-	}
-}
-
-	private void Log(string message)
-	{
-		_logOutput.AppendText($"{message}\n");
+		_pendingPasswordAction = action;
+		_passwordDialogLabel.Text = prompt;
+		_passwordInput.Text = "";
+		_passwordDialog.PopupCentered(new Vector2I(420, 160));
+		_passwordInput.GrabFocus();
 	}
 }
