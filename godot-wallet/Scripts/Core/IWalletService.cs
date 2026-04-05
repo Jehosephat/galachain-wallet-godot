@@ -7,11 +7,10 @@ public interface IWalletService
 	string GetAddress();
 	void CreateWallet(string password);
 	void ImportPrivateKey(string privateKey, string password);
+	void ImportMnemonic(string mnemonic, string password);
 	bool Unlock(string password);
 	void Lock();
 	List<TokenBalanceModel> GetBalances();
-
 	string ConsumePendingRecoveryPhrase();
-	
 	void LoadWalletMetadataIfPresent();
 }

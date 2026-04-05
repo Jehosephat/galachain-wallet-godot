@@ -68,6 +68,31 @@ public class WalletService : IWalletService
 
 		_storage.Save(record);
 	}
+	
+	public void ImportMnemonic(string mnemonic, string password)
+	{
+		string normalizedMnemonic = NormalizeMnemonic(mnemonic);
+
+		var wallet = new Nethereum.HdWallet.Wallet(normalizedMnemonic, "");
+		var account = wallet.GetAccount(0);
+
+		_state.HasWallet = true;
+		_state.IsUnlocked = true;
+		_state.Mnemonic = normalizedMnemonic;
+		_state.PendingRecoveryPhrase = "";
+		_state.PrivateKey = NormalizePrivateKey(account.PrivateKey);
+		_state.Address = account.Address;
+
+		_state.Balances = new List<TokenBalanceModel>();
+
+		var record = _crypto.EncryptSecret(
+			_state.Address,
+			WalletSecretType.Mnemonic,
+			normalizedMnemonic,
+			password);
+
+		_storage.Save(record);
+	}
 
 	public bool Unlock(string password)
 	{
@@ -122,6 +147,17 @@ public class WalletService : IWalletService
 		}
 
 		return trimmed;
+	}
+	
+	private static string NormalizeMnemonic(string mnemonic)
+	{
+		return string.Join(
+			" ",
+			mnemonic
+				.Trim()
+				.ToLowerInvariant()
+				.Split((char[])null, System.StringSplitOptions.RemoveEmptyEntries)
+		);
 	}
 	
 	public void LoadWalletMetadataIfPresent()

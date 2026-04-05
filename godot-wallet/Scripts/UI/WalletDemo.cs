@@ -22,13 +22,16 @@ public partial class WalletDemo : Control
 	private ConfirmationDialog _passwordDialog = null!;
 	private Label _passwordDialogLabel = null!;
 	private LineEdit _passwordInput = null!;
+	private Button _importMnemonicButton = null!;
+	private ConfirmationDialog _importMnemonicDialog = null!;
+	private LineEdit _importMnemonicInput = null!;
 
 	private PendingPasswordAction _pendingPasswordAction = PendingPasswordAction.None;
 	private string _pendingImportPrivateKey = "";
+	private string _pendingMnemonic = "";
 
 	public override void _Ready()
 	{
-		GD.Print(OS.GetUserDataDir());
 		_statusLabel = GetNode<Label>("%StatusLabel");
 		_addressValueLabel = GetNode<Label>("%AddressValueLabel");
 		_balancesList = GetNode<ItemList>("%BalancesList");
@@ -44,6 +47,9 @@ public partial class WalletDemo : Control
 		_importPrivateKeyInput = GetNode<LineEdit>("%ImportPrivateKeyInput");_passwordDialog = GetNode<ConfirmationDialog>("%PasswordDialog");
 		_passwordDialogLabel = GetNode<Label>("%PasswordDialogLabel");
 		_passwordInput = GetNode<LineEdit>("%PasswordInput");
+		_importMnemonicButton = GetNode<Button>("%ImportMnemonicButton");
+		_importMnemonicDialog = GetNode<ConfirmationDialog>("%ImportMnemonicDialog");
+		_importMnemonicInput = GetNode<LineEdit>("%ImportMnemonicInput");
 
 		_createWalletButton.Pressed += OnCreateWalletPressed;
 		_importWalletButton.Pressed += OnImportWalletPressed;
@@ -53,6 +59,8 @@ public partial class WalletDemo : Control
 		_refreshBalancesButton.Pressed += OnRefreshBalancesPressed;
 		_importPrivateKeyDialog.Confirmed += OnImportPrivateKeyConfirmed;
 		_passwordDialog.Confirmed += OnPasswordDialogConfirmed;
+		_importMnemonicButton.Pressed += OnImportMnemonicPressed;
+		_importMnemonicDialog.Confirmed += OnImportMnemonicConfirmed;
 		
 		_walletService.LoadWalletMetadataIfPresent();
 
@@ -172,6 +180,13 @@ public partial class WalletDemo : Control
 					Log(ok ? "Wallet unlocked." : "Unlock failed.");
 					break;
 
+				case PendingPasswordAction.ImportMnemonic:
+					_walletService.ImportMnemonic(_pendingMnemonic, password);
+					_pendingMnemonic = "";
+					RefreshUi();
+					Log("Imported wallet from recovery phrase and saved encrypted wallet file.");
+					break;
+
 				default:
 					Log("No password action was pending.");
 					break;
@@ -186,6 +201,31 @@ public partial class WalletDemo : Control
 			_pendingPasswordAction = PendingPasswordAction.None;
 			_passwordInput.Text = "";
 		}
+	}
+	
+	private void OnImportMnemonicPressed()
+	{
+		_importMnemonicInput.Text = "";
+		_importMnemonicDialog.PopupCentered(new Vector2I(620, 180));
+		_importMnemonicInput.GrabFocus();
+	}
+
+	private void OnImportMnemonicConfirmed()
+	{
+		string mnemonic = _importMnemonicInput.Text.Trim();
+
+		if (string.IsNullOrWhiteSpace(mnemonic))
+		{
+			Log("Mnemonic import failed: phrase was empty.");
+			return;
+		}
+
+		_pendingMnemonic = mnemonic;
+
+		OpenPasswordDialog(
+			PendingPasswordAction.ImportMnemonic,
+	        "Enter a password to encrypt the restored wallet."
+		);
 	}
 
 	private void RefreshUi()
@@ -213,6 +253,7 @@ public partial class WalletDemo : Control
 		_lockButton.Disabled = !hasWallet || !isUnlocked;
 		_copyAddressButton.Disabled = !hasWallet || !isUnlocked;
 		_refreshBalancesButton.Disabled = !hasWallet || !isUnlocked;
+		_importMnemonicButton.Disabled = hasWallet;
 
 		RefreshBalances();
 	}
