@@ -8,5 +8,6 @@
   <ItemGroup>
     <PackageReference Include="Nethereum.Accounts" Version="5.8.0" />
     <PackageReference Include="Nethereum.HDWallet" Version="5.8.0" />
+    <PackageReference Include="Nethereum.Signer" Version="5.8.0" />
   </ItemGroup>
 </Project>

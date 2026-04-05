@@ -175,4 +175,27 @@ public class WalletService : IWalletService
 		_state.Mnemonic = "";
 		_state.PrivateKey = "";
 	}
+	
+	private static string ToGalaAlias(string ethAddress)
+	{
+		string trimmed = ethAddress.Trim();
+
+		if (!trimmed.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+			throw new InvalidOperationException("Expected 0x-prefixed address.");
+
+		return $"eth|{trimmed[2..]}";
+	}
+	
+	private GalaTransferTokenRequest BuildTransferRequest(TransferDraft draft)
+	{
+		return new GalaTransferTokenRequest
+		{
+			UniqueKey = $"godot-wallet-{Guid.NewGuid()}",
+			DtoExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeMilliseconds(),
+			From = ToGalaAlias(_state.Address),
+			To = ToGalaAlias(draft.ToAddress),
+			Quantity = draft.Quantity,
+			TokenInstance = draft.TokenInstance
+		};
+	}
 }
