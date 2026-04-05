@@ -158,7 +158,6 @@ unique_name_in_owner = true
 offset_right = 68.5
 offset_bottom = 31.0
 placeholder_text = "0x..."
-secret = true
 
 [node name="ImportMnemonicDialog" type="ConfirmationDialog" parent="." unique_id=1720233734]
 unique_name_in_owner = true

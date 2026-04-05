@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using NBitcoin;
 using Nethereum.HdWallet;
 using Nethereum.Web3.Accounts;
+using System.Threading.Tasks;
 
 public class WalletService : IWalletService
 {
 	private readonly WalletState _state = new();
 	private readonly PasswordCryptoService _crypto = new();
 	private readonly IWalletStorage _storage = new FileWalletStorage();
+	private readonly IGalaChainClient _galaChainClient = new GalaChainClient();
 
 	public bool HasWallet() => _state.HasWallet;
 	public bool IsUnlocked() => _state.IsUnlocked;
@@ -28,12 +30,6 @@ public class WalletService : IWalletService
 
 		_state.PrivateKey = NormalizePrivateKey(account.PrivateKey);
 		_state.Address = account.Address;
-
-		_state.Balances = new List<TokenBalanceModel>
-		{
-			new TokenBalanceModel { Symbol = "GALA", DisplayAmount = "125.00" },
-			new TokenBalanceModel { Symbol = "TREZ", DisplayAmount = "42.00" }
-		};
 
 		var record = _crypto.EncryptSecret(
 			_state.Address,
@@ -58,8 +54,6 @@ public class WalletService : IWalletService
 		_state.PrivateKey = normalizedPrivateKey;
 		_state.Address = account.Address;
 
-		_state.Balances = new List<TokenBalanceModel>();
-
 		var record = _crypto.EncryptSecret(
 			_state.Address,
 			WalletSecretType.PrivateKey,
@@ -82,8 +76,6 @@ public class WalletService : IWalletService
 		_state.PendingRecoveryPhrase = "";
 		_state.PrivateKey = NormalizePrivateKey(account.PrivateKey);
 		_state.Address = account.Address;
-
-		_state.Balances = new List<TokenBalanceModel>();
 
 		var record = _crypto.EncryptSecret(
 			_state.Address,
@@ -128,6 +120,17 @@ public class WalletService : IWalletService
 	public List<TokenBalanceModel> GetBalances()
 	{
 		return _state.Balances;
+	}
+	
+	public async Task RefreshBalancesAsync()
+	{
+		if (!_state.HasWallet || !_state.IsUnlocked)
+		{
+			_state.Balances = new List<TokenBalanceModel>();
+			return;
+		}
+
+		_state.Balances = await _galaChainClient.FetchBalancesAsync(_state.Address);
 	}
 
 	public string ConsumePendingRecoveryPhrase()

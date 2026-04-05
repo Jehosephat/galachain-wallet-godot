@@ -109,12 +109,6 @@ public partial class WalletDemo : Control
 		DisplayServer.ClipboardSet(address);
 		Log($"Copied address: {address}");
 	}
-
-	private void OnRefreshBalancesPressed()
-	{
-		Log("Refreshing balances.");
-		RefreshUi();
-	}
 	
 	private void OnImportPrivateKeyConfirmed()
 	{
@@ -134,7 +128,7 @@ public partial class WalletDemo : Control
 		);
 	}
 	
-	private void OnPasswordDialogConfirmed()
+	private async void OnPasswordDialogConfirmed()
 	{
 		string password = _passwordInput.Text;
 
@@ -150,6 +144,7 @@ public partial class WalletDemo : Control
 			{
 				case PendingPasswordAction.CreateWallet:
 					_walletService.CreateWallet(password);
+					await _walletService.RefreshBalancesAsync();
 					RefreshUi();
 
 					var phrase = _walletService.ConsumePendingRecoveryPhrase();
@@ -170,12 +165,17 @@ public partial class WalletDemo : Control
 				case PendingPasswordAction.ImportWallet:
 					_walletService.ImportPrivateKey(_pendingImportPrivateKey, password);
 					_pendingImportPrivateKey = "";
+					await _walletService.RefreshBalancesAsync();
 					RefreshUi();
 					Log("Imported wallet and saved encrypted wallet file.");
 					break;
 
 				case PendingPasswordAction.UnlockWallet:
 					bool ok = _walletService.Unlock(password);
+					if (ok)
+					{
+						await _walletService.RefreshBalancesAsync();
+					}
 					RefreshUi();
 					Log(ok ? "Wallet unlocked." : "Unlock failed.");
 					break;
@@ -226,6 +226,21 @@ public partial class WalletDemo : Control
 			PendingPasswordAction.ImportMnemonic,
 	        "Enter a password to encrypt the restored wallet."
 		);
+	}
+	
+	private async void OnRefreshBalancesPressed()
+	{
+		try
+		{
+			Log("Refreshing balances from GalaChain...");
+			await _walletService.RefreshBalancesAsync();
+			RefreshUi();
+			Log("Balances refreshed.");
+		}
+		catch (System.Exception ex)
+		{
+			Log($"Balance refresh failed: {ex.Message}");
+		}
 	}
 
 	private void RefreshUi()
