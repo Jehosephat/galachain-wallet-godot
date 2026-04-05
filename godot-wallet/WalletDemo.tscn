@@ -138,6 +138,22 @@ focus_mode = 2
 scroll_following = true
 selection_enabled = true
 
-[node name="ImportPrivateKey" type="ConfirmationDialog" parent="." unique_id=1624659956]
+[node name="ImportPrivateKeyDialog" type="ConfirmationDialog" parent="." unique_id=1624659956]
+unique_name_in_owner = true
+title = "Import Private Key"
 
-[node name="SimpleMessage" type="AcceptDialog" parent="." unique_id=1829777973]
+[node name="ImportPrivateKeyLabel" type="Label" parent="ImportPrivateKeyDialog" unique_id=281941258]
+unique_name_in_owner = true
+offset_right = 40.0
+offset_bottom = 23.0
+text = "Paste a private key (hex, with or without 0x):"
+
+[node name="ImportPrivateKeyInput" type="LineEdit" parent="ImportPrivateKeyDialog" unique_id=2133944915]
+unique_name_in_owner = true
+offset_right = 68.5
+offset_bottom = 31.0
+placeholder_text = "0x..."
+secret = true
+
+[node name="SimpleMessageDialog" type="AcceptDialog" parent="." unique_id=1829777973]
+unique_name_in_owner = true

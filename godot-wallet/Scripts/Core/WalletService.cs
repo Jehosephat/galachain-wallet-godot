@@ -1,4 +1,8 @@
+using System;
 using System.Collections.Generic;
+using NBitcoin;
+using Nethereum.HdWallet;
+using Nethereum.Web3.Accounts;
 
 public class WalletService : IWalletService
 {
@@ -10,9 +14,19 @@ public class WalletService : IWalletService
 
 	public void CreateWallet()
 	{
+		var wallet = new Wallet(Wordlist.English, WordCount.Twelve);
+		var account = wallet.GetAccount(0);
+		var mnemonic = string.Join(" ", wallet.Words);
+
 		_state.HasWallet = true;
 		_state.IsUnlocked = true;
-		_state.Address = "0x1234567890abcdef1234567890abcdef12345678";
+
+		_state.Mnemonic = mnemonic;
+		_state.PendingRecoveryPhrase = mnemonic;
+
+		_state.PrivateKey = NormalizePrivateKey(account.PrivateKey);
+		_state.Address = account.Address;
+
 		_state.Balances = new List<TokenBalanceModel>
 		{
 			new TokenBalanceModel { Symbol = "GALA", DisplayAmount = "125.00" },
@@ -22,9 +36,18 @@ public class WalletService : IWalletService
 
 	public void ImportPrivateKey(string privateKey)
 	{
+		var normalizedPrivateKey = NormalizePrivateKey(privateKey);
+		var account = new Account(normalizedPrivateKey);
+
 		_state.HasWallet = true;
 		_state.IsUnlocked = true;
-		_state.Address = "0ximported00000000000000000000000000000000";
+
+		_state.Mnemonic = "";
+		_state.PendingRecoveryPhrase = "";
+
+		_state.PrivateKey = normalizedPrivateKey;
+		_state.Address = account.Address;
+
 		_state.Balances = new List<TokenBalanceModel>();
 	}
 
@@ -43,5 +66,24 @@ public class WalletService : IWalletService
 	public List<TokenBalanceModel> GetBalances()
 	{
 		return _state.Balances;
+	}
+
+	public string ConsumePendingRecoveryPhrase()
+	{
+		var phrase = _state.PendingRecoveryPhrase;
+		_state.PendingRecoveryPhrase = "";
+		return phrase;
+	}
+
+	private static string NormalizePrivateKey(string privateKey)
+	{
+		var trimmed = privateKey.Trim();
+
+		if (!trimmed.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+		{
+			trimmed = "0x" + trimmed;
+		}
+
+		return trimmed;
 	}
 }

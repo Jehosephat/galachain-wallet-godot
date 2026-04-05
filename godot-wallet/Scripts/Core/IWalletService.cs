@@ -10,4 +10,6 @@ public interface IWalletService
 	bool Unlock(string password);
 	void Lock();
 	List<TokenBalanceModel> GetBalances();
+
+	string ConsumePendingRecoveryPhrase();
 }

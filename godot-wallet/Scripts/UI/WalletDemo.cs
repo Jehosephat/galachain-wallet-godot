@@ -16,6 +16,9 @@ public partial class WalletDemo : Control
 	private Button _copyAddressButton = null!;
 	private Button _refreshBalancesButton = null!;
 	private Button _createWalletButton = null!;
+	private AcceptDialog _simpleMessageDialog = null!;
+	private ConfirmationDialog _importPrivateKeyDialog = null!;
+	private LineEdit _importPrivateKeyInput = null!;
 
 	public override void _Ready()
 	{
@@ -29,6 +32,9 @@ public partial class WalletDemo : Control
 		_lockButton = GetNode<Button>("%LockButton");
 		_copyAddressButton = GetNode<Button>("%CopyAddressButton");
 		_refreshBalancesButton = GetNode<Button>("%RefreshBalancesButton");
+		_simpleMessageDialog = GetNode<AcceptDialog>("%SimpleMessageDialog");
+		_importPrivateKeyDialog = GetNode<ConfirmationDialog>("%ImportPrivateKeyDialog");
+		_importPrivateKeyInput = GetNode<LineEdit>("%ImportPrivateKeyInput");
 
 		_createWalletButton.Pressed += OnCreateWalletPressed;
 		_importWalletButton.Pressed += OnImportWalletPressed;
@@ -36,6 +42,7 @@ public partial class WalletDemo : Control
 		_lockButton.Pressed += OnLockPressed;
 		_copyAddressButton.Pressed += OnCopyAddressPressed;
 		_refreshBalancesButton.Pressed += OnRefreshBalancesPressed;
+		_importPrivateKeyDialog.Confirmed += OnImportPrivateKeyConfirmed;
 
 		RefreshUi();
 		Log("Wallet demo ready.");
@@ -44,15 +51,27 @@ public partial class WalletDemo : Control
 	private void OnCreateWalletPressed()
 	{
 		_walletService.CreateWallet();
-		Log("Created test wallet.");
 		RefreshUi();
+		
+		var phrase = _walletService.ConsumePendingRecoveryPhrase();
+		if(!string.IsNullOrWhiteSpace(phrase))
+		{
+			_simpleMessageDialog.Title = "Recovery Phrase";
+			_simpleMessageDialog.DialogText =
+				"Write this down and store it safely.\n\n" +
+				"This is the only time it will be shown:\n\n" +
+				phrase;
+				
+			_simpleMessageDialog.PopupCentered();
+		}
+		
+		//Log("Created wallet.");
 	}
-
+	
 	private void OnImportWalletPressed()
 	{
-		_walletService.ImportPrivateKey("dummy-private-key");
-		Log("Imported test wallet.");
-		RefreshUi();
+		_importPrivateKeyInput.Text = "";
+		_importPrivateKeyDialog.PopupCentered(new Vector2I(500, 180));
 	}
 
 	private void OnUnlockPressed()
@@ -86,6 +105,30 @@ public partial class WalletDemo : Control
 	{
 		Log("Refreshing balances.");
 		RefreshUi();
+	}
+	
+	private void OnImportPrivateKeyConfirmed()
+	{
+		var privateKey = _importPrivateKeyInput.Text.Trim();
+
+		if (string.IsNullOrWhiteSpace(privateKey))
+		{
+			Log("Import failed: private key was empty.");
+			return;
+		}
+
+		try
+		{
+			_walletService.ImportPrivateKey(privateKey);
+			RefreshUi();
+			Log("Imported wallet from private key.");
+
+			_importPrivateKeyInput.Text = "";
+		}
+		catch (System.Exception ex)
+		{
+			Log($"Import failed: {ex.Message}");
+		}
 	}
 
 	private void RefreshUi()
