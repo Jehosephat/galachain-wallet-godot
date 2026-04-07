@@ -190,13 +190,16 @@ public class WalletService : IWalletService
 	
 	private GalaTransferTokenRequest BuildTransferRequest(TransferDraft draft)
 	{
+		long expiresAt = DateTimeOffset.UtcNow.AddMinutes(3).ToUnixTimeMilliseconds();
+
 		return new GalaTransferTokenRequest
 		{
 			from = ToGalaAlias(_state.Address),
 			to = draft.ToAddress, //validation should force this to eth| or client|
 			quantity = draft.Quantity,
 			tokenInstance = draft.TokenInstance,
-			uniqueKey = $"godot-wallet-{System.Guid.NewGuid()}"
+			uniqueKey = $"godot-wallet-{System.Guid.NewGuid()}",
+			dtoExpiresAt = expiresAt
 		};
 	}
 	
