@@ -38,6 +38,24 @@ This document tracks changes made after the initial MVP implementation (commit `
 - **Change**: Moved `LoadWalletMetadataIfPresent()` inside the existing `_walletService != null` guard.
 - **File**: `Scripts/UI/GalaChainWallet.cs:_Ready()`
 
+### Dry-run transfer preview with inline fee display
+- **Problem**: Blueprint (Section 17) specifies an optional dry-run preview before submitting transfers. Users had no way to see the expected fee before committing.
+- **Changes**:
+  - Added `DryRunUrl` computed property to `GalaChainNetworkConfig` (`/DryRun` endpoint).
+  - Added `GalaDryRunResponse`, `GalaDryRunData`, `GalaDryRunInnerResponse` models to parse the dry-run API response.
+  - Added `TransferPreviewResult` model — the service-layer return type with `WouldSucceed`, `Message`, `EstimatedFee`, `FeeToken`.
+  - Added `DryRunTransferAsync` to `IGalaChainClient`/`GalaChainClient` — POSTs an unsigned DTO to the DryRun endpoint, extracts fees from the `writes` dictionary.
+  - Added `PreviewTransferAsync` to `IWalletService`/`WalletService` — builds an unsigned preview DTO and calls dry-run (no signing needed for simulation).
+  - **UI**: When inputs validate in the transfer dialog, a dry-run fires asynchronously and the estimated fee appears inline in the summary label (e.g., "Estimated fee: 1 GALA"). The user sees the fee before clicking OK.
+  - Fixed TransferDialog title from "Wallet Password" to "Confirm Transfer".
+- **GalaChain DryRun API details discovered during implementation**:
+  - Endpoint: `POST /api/{channel}/{contract}/DryRun`
+  - Request: `{ method: "TransferToken", signerAddress: "eth|...", dto: { ...transfer fields... } }` — inner DTO fields must be nested under a `dto` property, not flat at the top level.
+  - No signature required for dry-run; `signerAddress` identifies the caller.
+  - Response: `{ Status: 1, Data: { response: {...}, reads: {...}, writes: {...}, deletes: {...} } }`
+  - Fee extraction: scan `writes` for keys containing `GCFR` (fee record), parse JSON value, read `quantity` field. Fee is in GALA (burned).
+- **Files**: `GalaChainNetworkConfig.cs`, `GalaDryRunResponse.cs` (new), `TransferPreviewResult.cs` (new), `IGalaChainClient.cs`, `GalaChainClient.cs`, `IWalletService.cs`, `WalletService.cs`, `GalaChainWallet.cs`, `GalaChainWallet.tscn`
+
 ### Quality / Blueprint compliance batch
 Six fixes applied in one pass:
 

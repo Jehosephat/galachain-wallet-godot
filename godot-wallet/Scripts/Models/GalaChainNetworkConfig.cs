@@ -8,4 +8,5 @@ public class GalaChainNetworkConfig
 
 	public string FetchBalancesUrl => $"{ApiBaseUrl}/{Channel}/{Contract}/FetchBalances";
 	public string TransferTokenUrl => $"{ApiBaseUrl}/{Channel}/{Contract}/TransferToken";
+	public string DryRunUrl => $"{ApiBaseUrl}/{Channel}/{Contract}/DryRun";
 }

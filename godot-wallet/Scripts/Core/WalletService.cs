@@ -220,6 +220,15 @@ public class WalletService : IWalletService
 		};
 	}
 	
+	public async Task<TransferPreviewResult> PreviewTransferAsync(TransferDraft draft)
+	{
+		if (!_state.HasWallet || !_state.IsUnlocked)
+			throw new InvalidOperationException("Wallet must be unlocked to preview transfer.");
+
+		var request = BuildTransferRequest(draft);
+		return await _galaChainClient.DryRunTransferAsync(request);
+	}
+
 	public async Task SubmitTransferAsync(TransferDraft draft)
 	{
 		if (!_state.HasWallet || !_state.IsUnlocked)

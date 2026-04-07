@@ -37,7 +37,6 @@ public partial class GalaChainWallet : Control
 	private LineEdit _transferToInput = null!;
 	private LineEdit _transferQuantityInput = null!;
 	private Label _transferSummaryLabel = null!;
-
 	private TokenBalanceModel? _selectedTransferToken;
 
 	private PendingPasswordAction _pendingPasswordAction = PendingPasswordAction.None;
@@ -483,18 +482,59 @@ public partial class GalaChainWallet : Control
 
 		_transferSummaryLabel.Text =
 			$"You are about to transfer {draft.Quantity} {draft.DisplaySymbol}\n" +
-			$"To: {draft.ToAddress}";
+			$"To: {draft.ToAddress}\n" +
+			$"Estimated fee: loading...";
+
+		RunDryRunPreview(draft);
 	}
-	
+
+	private async void RunDryRunPreview(TransferDraft draft)
+	{
+		if (_walletService == null || !_walletService.IsUnlocked())
+			return;
+
+		try
+		{
+			var preview = await _walletService.PreviewTransferAsync(draft);
+
+			string feeDisplay = "None";
+			if (preview.WouldSucceed)
+			{
+				feeDisplay = decimal.TryParse(preview.EstimatedFee,
+					System.Globalization.NumberStyles.Any,
+					System.Globalization.CultureInfo.InvariantCulture,
+					out var feeAmount) && feeAmount > 0m
+					? $"{feeAmount:0.########} {preview.FeeToken}".Trim()
+					: "None";
+			}
+			else
+			{
+				feeDisplay = $"Preview failed: {preview.Message}";
+			}
+
+			_transferSummaryLabel.Text =
+				$"You are about to transfer {draft.Quantity} {draft.DisplaySymbol}\n" +
+				$"To: {draft.ToAddress}\n" +
+				$"Estimated fee: {feeDisplay}";
+		}
+		catch
+		{
+			_transferSummaryLabel.Text =
+				$"You are about to transfer {draft.Quantity} {draft.DisplaySymbol}\n" +
+				$"To: {draft.ToAddress}\n" +
+				$"Estimated fee: unavailable";
+		}
+	}
+
 	private async void OnTransferDialogConfirmed()
 	{
 		if (!EnsureService())
 		{
 			return;
 		}
-		
+
 		var walletService = _walletService!;
-		
+
 		if (!TryBuildTransferDraft(out var draft, out var error))
 		{
 			Log($"Transfer failed: {error}");

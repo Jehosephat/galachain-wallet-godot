@@ -7,4 +7,5 @@ namespace GalaWallet.Core;
 public interface IGalaChainClient
 {
 	Task<List<TokenBalanceModel>> FetchBalancesAsync(string ethAddress);
+	Task<TransferPreviewResult> DryRunTransferAsync(GalaTransferTokenRequest signedRequest);
 }
