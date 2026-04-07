@@ -424,8 +424,8 @@ Godot’s encrypted file APIs are useful, but the wallet should still treat pass
 1. **Every submitted DTO gets `dtoExpiresAt`**
    - default window: 2–5 minutes
 
-2. **Set `dtoOperation` explicitly**
-   - do not rely on implied operation routing
+2. ~~**Set `dtoOperation` explicitly**~~
+   - **Deferred**: GalaChain's current Gateway API does not reliably support this field. Operation routing is handled by the endpoint URL. Revisit if GalaChain adds explicit `dtoOperation` validation in a future release.
 
 3. **Generate a unique key**
    - every submit transaction gets a fresh `uniqueKey`

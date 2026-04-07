@@ -43,7 +43,7 @@ This document tracks changes made after the initial MVP implementation (commit `
 ## Known issues remaining
 See `PROJECT-ANALYSIS.md` Section 5 for the full critical issues list. Key items still open:
 - Mnemonic-imported wallets cannot sign after unlock (private key not re-derived)
-- No `dtoOperation` field on transfer requests
+- ~~No `dtoOperation` field on transfer requests~~ — **Deferred**: GalaChain's current Gateway API does not reliably support this field; operation routing is handled by endpoint URL. Revisit if GalaChain adds support.
 - `GalaCanonicalJson` does not exclude `signature`/`trace` fields
 - No DTO policy registry / allowlist enforcement
 - No idle timeout / auto-lock

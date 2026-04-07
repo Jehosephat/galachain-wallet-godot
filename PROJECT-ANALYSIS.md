@@ -157,13 +157,11 @@ If `Initialize()` hasn't been called before `_Ready()` runs (which depends on Go
 
 **Location**: `GalaSigner.cs:9-17`
 
-The signer creates an anonymous object with specific fields to sign, which is a reasonable workaround. However, it hardcodes the field list and does not include a `dtoOperation` field (since that field doesn't exist yet). The `GalaCanonicalJson` serializer itself has no logic to exclude `signature` or `trace` as the blueprint requires (Section 16). If anyone later passes the full `GalaTransferTokenRequest` to the serializer instead of the anonymous object, the signature field (which contains `""` by default) would be included in the hash, producing an invalid signature.
+The signer creates an anonymous object with specific fields to sign, which is a reasonable workaround. However, it hardcodes the field list. The `GalaCanonicalJson` serializer itself has no logic to exclude `signature` or `trace` as the blueprint requires (Section 16). If anyone later passes the full `GalaTransferTokenRequest` to the serializer instead of the anonymous object, the signature field (which contains `""` by default) would be included in the hash, producing an invalid signature.
 
-### 5.5 No `dtoOperation` Field
+### 5.5 ~~No `dtoOperation` Field~~ (Deferred)
 
-**Location**: `GalaTransferTokenRequest.cs`
-
-The blueprint (Section 12, Rule 2) says: *"Set `dtoOperation` explicitly — do not rely on implied operation routing."* The DTO model has no `dtoOperation` property. Depending on GalaChain's current API behavior, this may or may not cause failures, but it violates the intended safety model.
+GalaChain's current Gateway API does not reliably support a `dtoOperation` field on submitted DTOs. Operation routing is handled by the endpoint URL, not a DTO field. The blueprint's Rule 2 (Section 12) has been updated to reflect this. Revisit if GalaChain adds explicit `dtoOperation` validation in a future release.
 
 ---
 
