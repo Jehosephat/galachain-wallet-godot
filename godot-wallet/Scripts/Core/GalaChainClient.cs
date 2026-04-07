@@ -73,7 +73,15 @@ public class GalaChainClient : IGalaChainClient
 				Symbol = symbol,
 				DisplayAmount = locked > 0m
 					? $"{available:0.########} available ({total:0.########} total)"
-					: $"{total:0.########}"
+					: $"{total:0.########}",
+
+				Collection = item.Collection,
+				Category = item.Category,
+				Type = item.Type,
+				AdditionalKey = item.AdditionalKey,
+				Instance = "0",
+				RawQuantity = item.Quantity,
+				AvailableAmount = available
 			});
 		}
 

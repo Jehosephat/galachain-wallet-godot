@@ -1,8 +1,8 @@
 public class GalaTokenInstance
 {
-	public string Collection { get; set; } = "";
-	public string Category { get; set; } = "";
-	public string Type { get; set; } = "";
-	public string AdditionalKey { get; set; } = "";
-	public string Instance { get; set; } = "0";
+	public string collection { get; set; } = "";
+	public string category { get; set; } = "";
+	public string type { get; set; } = "";
+	public string additionalKey { get; set; } = "";
+	public string instance { get; set; } = "0";
 }

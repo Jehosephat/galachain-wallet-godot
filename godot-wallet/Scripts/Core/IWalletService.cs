@@ -15,4 +15,5 @@ public interface IWalletService
 	Task RefreshBalancesAsync();
 	string ConsumePendingRecoveryPhrase();
 	void LoadWalletMetadataIfPresent();
+	Task SubmitTransferAsync(TransferDraft draft);
 }

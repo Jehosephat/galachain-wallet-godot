@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Text;
 using System.Collections.Generic;
 
@@ -25,6 +26,14 @@ public partial class WalletDemo : Control
 	private Button _importMnemonicButton = null!;
 	private ConfirmationDialog _importMnemonicDialog = null!;
 	private LineEdit _importMnemonicInput = null!;
+	private Button _transferButton = null!;
+	private ConfirmationDialog _transferDialog = null!;
+	private Label _transferSelectedTokenLabel = null!;
+	private LineEdit _transferToInput = null!;
+	private LineEdit _transferQuantityInput = null!;
+	private Label _transferSummaryLabel = null!;
+
+	private TokenBalanceModel? _selectedTransferToken;
 
 	private PendingPasswordAction _pendingPasswordAction = PendingPasswordAction.None;
 	private string _pendingImportPrivateKey = "";
@@ -50,6 +59,12 @@ public partial class WalletDemo : Control
 		_importMnemonicButton = GetNode<Button>("%ImportMnemonicButton");
 		_importMnemonicDialog = GetNode<ConfirmationDialog>("%ImportMnemonicDialog");
 		_importMnemonicInput = GetNode<LineEdit>("%ImportMnemonicInput");
+		_transferButton = GetNode<Button>("%TransferButton");
+		_transferDialog = GetNode<ConfirmationDialog>("%TransferDialog");
+		_transferSelectedTokenLabel = GetNode<Label>("%TransferSelectedTokenLabel");
+		_transferToInput = GetNode<LineEdit>("%TransferToInput");
+		_transferQuantityInput = GetNode<LineEdit>("%TransferQuantityInput");
+		_transferSummaryLabel = GetNode<Label>("%TransferSummaryLabel");
 
 		_createWalletButton.Pressed += OnCreateWalletPressed;
 		_importWalletButton.Pressed += OnImportWalletPressed;
@@ -61,6 +76,10 @@ public partial class WalletDemo : Control
 		_passwordDialog.Confirmed += OnPasswordDialogConfirmed;
 		_importMnemonicButton.Pressed += OnImportMnemonicPressed;
 		_importMnemonicDialog.Confirmed += OnImportMnemonicConfirmed;
+		_transferButton.Pressed += OnTransferPressed;
+		_transferDialog.Confirmed += OnTransferDialogConfirmed;
+		_transferToInput.TextChanged += OnTransferInputChanged;
+		_transferQuantityInput.TextChanged += OnTransferInputChanged;
 		
 		_walletService.LoadWalletMetadataIfPresent();
 
@@ -108,6 +127,43 @@ public partial class WalletDemo : Control
 
 		DisplayServer.ClipboardSet(address);
 		Log($"Copied address: {address}");
+	}
+	
+	private void OnTransferPressed()
+	{
+		if (!_walletService.HasWallet() || !_walletService.IsUnlocked())
+		{
+			Log("Unlock the wallet before transferring.");
+			return;
+		}
+
+		var selected = _balancesList.GetSelectedItems();
+		if (selected.Length == 0)
+		{
+			Log("Select a token balance first.");
+			return;
+		}
+
+		int selectedIndex = selected[0];
+		var balances = _walletService.GetBalances();
+
+		if (selectedIndex < 0 || selectedIndex >= balances.Count)
+		{
+			Log("Selected balance index was invalid.");
+			return;
+		}
+
+		_selectedTransferToken = balances[selectedIndex];
+
+		_transferSelectedTokenLabel.Text =
+			$"Token: {_selectedTransferToken.Symbol} | Available: {_selectedTransferToken.AvailableAmount:0.########}";
+
+		_transferToInput.Text = "";
+		_transferQuantityInput.Text = "";
+		_transferSummaryLabel.Text = "";
+
+		_transferDialog.PopupCentered(new Vector2I(520, 240));
+		_transferToInput.GrabFocus();
 	}
 	
 	private void OnImportPrivateKeyConfirmed()
@@ -242,6 +298,129 @@ public partial class WalletDemo : Control
 			Log($"Balance refresh failed: {ex.Message}");
 		}
 	}
+	
+	private void OnTransferInputChanged(string _newText)
+	{
+		UpdateTransferSummary();
+	}
+
+	private void UpdateTransferSummary()
+	{
+		if (!TryBuildTransferDraft(out var draft, out var error))
+		{
+			_transferSummaryLabel.Text = string.IsNullOrWhiteSpace(error)
+				? ""
+				: $"Preview unavailable: {error}";
+			return;
+		}
+
+		_transferSummaryLabel.Text =
+			$"You are about to transfer {draft.Quantity} {draft.DisplaySymbol}\n" +
+			$"To: {draft.ToAddress}";
+	}
+	
+	private async void OnTransferDialogConfirmed()
+	{
+		if (!TryBuildTransferDraft(out var draft, out var error))
+		{
+			Log($"Transfer failed: {error}");
+			UpdateTransferSummary();
+			return;
+		}
+
+		try
+		{
+			Log($"Submitting transfer of {draft.Quantity} {draft.DisplaySymbol}...");
+			await _walletService.SubmitTransferAsync(draft);
+			RefreshUi();
+			Log("Transfer successful.");
+		}
+		catch (System.Exception ex)
+		{
+			Log($"Transfer failed: {ex.Message}");
+		}
+	}
+	
+	private bool TryBuildTransferDraft(out TransferDraft draft, out string error)
+	{
+		draft = new TransferDraft();
+		error = "";
+
+		if (_selectedTransferToken == null)
+		{
+			error = "No token selected.";
+			return false;
+		}
+
+		string toAddress = _transferToInput.Text.Trim();
+		string quantityText = _transferQuantityInput.Text.Trim();
+
+		if (string.IsNullOrWhiteSpace(toAddress))
+		{
+			error = "Recipient address is required.";
+			return false;
+		}
+
+		if (!toAddress.StartsWith("eth|", StringComparison.OrdinalIgnoreCase))
+		{
+			if(!toAddress.StartsWith("client|", StringComparison.OrdinalIgnoreCase))
+			{
+				error = "Recipient address must start with eht| or client|.";
+				return false;
+			}
+		}
+
+		if (string.Equals(toAddress, _walletService.GetAddress(), StringComparison.OrdinalIgnoreCase))
+		{
+			error = "Cannot transfer to the same wallet address.";
+			return false;
+		}
+
+		if (string.IsNullOrWhiteSpace(quantityText))
+		{
+			error = "Quantity is required.";
+			return false;
+		}
+
+		if (!decimal.TryParse(
+				quantityText,
+				System.Globalization.NumberStyles.Any,
+				System.Globalization.CultureInfo.InvariantCulture,
+				out var quantity))
+		{
+			error = "Quantity must be a valid number.";
+			return false;
+		}
+
+		if (quantity <= 0m)
+		{
+			error = "Quantity must be greater than zero.";
+			return false;
+		}
+
+		if (quantity > _selectedTransferToken.AvailableAmount)
+		{
+			error = "Quantity exceeds available balance.";
+			return false;
+		}
+
+		draft = new TransferDraft
+		{
+			ToAddress = toAddress,
+			Quantity = quantityText,
+			DisplaySymbol = _selectedTransferToken.Symbol,
+			TokenInstance = new GalaTokenInstance
+			{
+				collection = _selectedTransferToken.Collection,
+				category = _selectedTransferToken.Category,
+				type = _selectedTransferToken.Type,
+				additionalKey = _selectedTransferToken.AdditionalKey,
+				instance = _selectedTransferToken.Instance
+			}
+		};
+
+		return true;
+	}
 
 	private void RefreshUi()
 	{
@@ -269,6 +448,7 @@ public partial class WalletDemo : Control
 		_copyAddressButton.Disabled = !hasWallet || !isUnlocked;
 		_refreshBalancesButton.Disabled = !hasWallet || !isUnlocked;
 		_importMnemonicButton.Disabled = hasWallet;
+		_transferButton.Disabled = !_walletService.HasWallet() || !_walletService.IsUnlocked();
 
 		RefreshBalances();
 	}

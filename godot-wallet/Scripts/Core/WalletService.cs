@@ -11,6 +11,8 @@ public class WalletService : IWalletService
 	private readonly PasswordCryptoService _crypto = new();
 	private readonly IWalletStorage _storage = new FileWalletStorage();
 	private readonly IGalaChainClient _galaChainClient = new GalaChainClient();
+	private readonly IGalaTransferClient _galaTransferClient = new GalaTransferClient();
+	private readonly GalaSigner _galaSigner = new GalaSigner();
 
 	public bool HasWallet() => _state.HasWallet;
 	public bool IsUnlocked() => _state.IsUnlocked;
@@ -190,12 +192,26 @@ public class WalletService : IWalletService
 	{
 		return new GalaTransferTokenRequest
 		{
-			UniqueKey = $"godot-wallet-{Guid.NewGuid()}",
-			DtoExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeMilliseconds(),
-			From = ToGalaAlias(_state.Address),
-			To = ToGalaAlias(draft.ToAddress),
-			Quantity = draft.Quantity,
-			TokenInstance = draft.TokenInstance
+			from = ToGalaAlias(_state.Address),
+			to = draft.ToAddress, //validation should force this to eth| or client|
+			quantity = draft.Quantity,
+			tokenInstance = draft.TokenInstance,
+			uniqueKey = $"godot-wallet-{System.Guid.NewGuid()}"
 		};
+	}
+	
+	public async Task SubmitTransferAsync(TransferDraft draft)
+	{
+		if (!_state.HasWallet || !_state.IsUnlocked)
+			throw new InvalidOperationException("Wallet must be unlocked to transfer.");
+
+		if (string.IsNullOrWhiteSpace(_state.PrivateKey))
+			throw new InvalidOperationException("Private key is not available in memory.");
+
+		var request = BuildTransferRequest(draft);
+
+		_galaSigner.SignTransfer(request, _state.PrivateKey);
+		await _galaTransferClient.TransferAsync(request, ToGalaAlias(_state.Address));
+		await RefreshBalancesAsync();
 	}
 }
