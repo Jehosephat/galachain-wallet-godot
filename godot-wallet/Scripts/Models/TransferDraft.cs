@@ -1,3 +1,5 @@
+namespace GalaWallet.Models;
+
 public class TransferDraft
 {
 	public string ToAddress { get; set; } = "";

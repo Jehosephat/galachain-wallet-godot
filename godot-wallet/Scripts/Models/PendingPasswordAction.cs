@@ -1,3 +1,5 @@
+namespace GalaWallet.Models;
+
 public enum PendingPasswordAction
 {
 	None = 0,

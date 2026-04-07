@@ -1,16 +1,25 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.Json;
+
+namespace GalaWallet.Core;
 
 public static class GalaCanonicalJson
 {
 	public static string Serialize(object value)
 	{
-		object normalized = Normalize(value);
+		object normalized = Normalize(value, isRoot: true);
 		return JsonSerializer.Serialize(normalized);
 	}
 
-	private static object? Normalize(object? value)
+	private static readonly HashSet<string> ExcludedFields = new(StringComparer.OrdinalIgnoreCase)
+	{
+		"signature",
+		"trace"
+	};
+
+	private static object? Normalize(object? value, bool isRoot = false)
 	{
 		if (value == null) return null;
 
@@ -32,8 +41,12 @@ public static class GalaCanonicalJson
 		var dict = new SortedDictionary<string, object?>();
 		foreach (var prop in type.GetProperties())
 		{
-			var propValue = prop.GetValue(value);
-			dict[prop.Name.Substring(0, 1).ToLower() + prop.Name.Substring(1)] = Normalize(propValue);
+			string camelName = prop.Name.Substring(0, 1).ToLower() + prop.Name.Substring(1);
+
+			if (isRoot && ExcludedFields.Contains(camelName))
+				continue;
+
+			dict[camelName] = Normalize(prop.GetValue(value));
 		}
 
 		return dict;

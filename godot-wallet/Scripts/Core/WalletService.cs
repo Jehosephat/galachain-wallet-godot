@@ -4,15 +4,32 @@ using NBitcoin;
 using Nethereum.HdWallet;
 using Nethereum.Web3.Accounts;
 using System.Threading.Tasks;
+using GalaWallet.Models;
+
+namespace GalaWallet.Core;
 
 public class WalletService : IWalletService
 {
 	private readonly WalletState _state = new();
-	private readonly PasswordCryptoService _crypto = new();
-	private readonly IWalletStorage _storage = new FileWalletStorage();
-	private readonly IGalaChainClient _galaChainClient = new GalaChainClient();
-	private readonly IGalaTransferClient _galaTransferClient = new GalaTransferClient();
-	private readonly GalaSigner _galaSigner = new GalaSigner();
+	private readonly PasswordCryptoService _crypto;
+	private readonly IWalletStorage _storage;
+	private readonly IGalaChainClient _galaChainClient;
+	private readonly IGalaTransferClient _galaTransferClient;
+	private readonly GalaSigner _galaSigner;
+
+	public WalletService(
+		PasswordCryptoService? crypto = null,
+		IWalletStorage? storage = null,
+		IGalaChainClient? galaChainClient = null,
+		IGalaTransferClient? galaTransferClient = null,
+		GalaSigner? galaSigner = null)
+	{
+		_crypto = crypto ?? new PasswordCryptoService();
+		_storage = storage ?? new FileWalletStorage();
+		_galaChainClient = galaChainClient ?? new GalaChainClient();
+		_galaTransferClient = galaTransferClient ?? new GalaTransferClient();
+		_galaSigner = galaSigner ?? new GalaSigner();
+	}
 
 	public bool HasWallet() => _state.HasWallet;
 	public bool IsUnlocked() => _state.IsUnlocked;

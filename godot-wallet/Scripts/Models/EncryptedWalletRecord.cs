@@ -1,3 +1,5 @@
+namespace GalaWallet.Models;
+
 public class EncryptedWalletRecord
 {
 	public int Version { get; set; } = 1;

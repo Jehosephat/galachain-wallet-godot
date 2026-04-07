@@ -2,6 +2,9 @@ using System;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using GalaWallet.Models;
+
+namespace GalaWallet.Core;
 
 public class PasswordCryptoService
 {

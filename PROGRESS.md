@@ -38,14 +38,38 @@ This document tracks changes made after the initial MVP implementation (commit `
 - **Change**: Moved `LoadWalletMetadataIfPresent()` inside the existing `_walletService != null` guard.
 - **File**: `Scripts/UI/GalaChainWallet.cs:_Ready()`
 
+### Quality / Blueprint compliance batch
+Six fixes applied in one pass:
+
+1. **File name swap fixed**: `GalaTransferClient.cs` now contains the class, `IGalaTransferClient.cs` now contains the interface. Contents were swapped to match standard C# naming convention.
+
+2. **Typo fixed**: `"eht|"` corrected to `"eth|"` in the transfer validation error message in `GalaChainWallet.cs`.
+
+3. **`TransferTokenUrl` added to `GalaChainNetworkConfig`**: Computed property matching the existing `FetchBalancesUrl` pattern. `GalaTransferClient` now uses it instead of building the URL inline.
+
+4. **`GalaCanonicalJson` now excludes `signature` and `trace`**: Added a `HashSet<string> ExcludedFields` and an `isRoot` parameter to `Normalize()`. Top-level properties named `signature` or `trace` are skipped during serialization. This means the full `GalaTransferTokenRequest` can now be passed directly to the serializer without the anonymous-object workaround (though the signer still uses the explicit field list for clarity).
+
+5. **Constructor-based DI on `WalletService`**: All dependencies (`PasswordCryptoService`, `IWalletStorage`, `IGalaChainClient`, `IGalaTransferClient`, `GalaSigner`) are now injected via optional constructor parameters with sensible defaults. This enables substitution for testing, testnet configs, or mock implementations without modifying the class.
+
+6. **C# namespaces added to all files**:
+   - `GalaWallet.Models` — all DTOs, enums, state models (12 files)
+   - `GalaWallet.Core` — services, interfaces, signing, storage (13 files)
+   - `GalaWallet.UI` — wallet UI controller (1 file)
+   - `GalaWallet.Services` — clipboard stub (1 file)
+   - `WalletDemoGame` left in global namespace (entry point)
+   - Cross-namespace `using` directives added where needed.
+   - File-scoped namespace syntax (`namespace X;`) used throughout.
+
+**Build verified**: `dotnet build` succeeds with 0 errors (21 pre-existing nullable warnings).
+
 ---
 
 ## Known issues remaining
 See `PROJECT-ANALYSIS.md` Section 5 for the full critical issues list. Key items still open:
 - Mnemonic-imported wallets cannot sign after unlock (private key not re-derived)
 - ~~No `dtoOperation` field on transfer requests~~ — **Deferred**: GalaChain's current Gateway API does not reliably support this field; operation routing is handled by endpoint URL. Revisit if GalaChain adds support.
-- `GalaCanonicalJson` does not exclude `signature`/`trace` fields
+- ~~`GalaCanonicalJson` does not exclude `signature`/`trace` fields~~ — Fixed
 - No DTO policy registry / allowlist enforcement
 - No idle timeout / auto-lock
 - No unit tests
-- Interface/class file name swap (`GalaTransferClient.cs` ↔ `IGalaTransferClient.cs`)
+- ~~Interface/class file name swap (`GalaTransferClient.cs` ↔ `IGalaTransferClient.cs`)~~ — Fixed

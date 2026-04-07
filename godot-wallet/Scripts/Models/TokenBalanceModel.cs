@@ -1,3 +1,5 @@
+namespace GalaWallet.Models;
+
 public class TokenBalanceModel
 {
 	public string Symbol { get; set; } = "";

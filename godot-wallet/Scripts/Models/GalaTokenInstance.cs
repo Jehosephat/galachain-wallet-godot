@@ -1,3 +1,5 @@
+namespace GalaWallet.Models;
+
 public class GalaTokenInstance
 {
 	public string collection { get; set; } = "";

@@ -1,5 +1,8 @@
 using Godot;
 using System.Text.Json;
+using GalaWallet.Models;
+
+namespace GalaWallet.Core;
 
 public class FileWalletStorage : IWalletStorage
 {

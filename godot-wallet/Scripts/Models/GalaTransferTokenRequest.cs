@@ -1,3 +1,5 @@
+namespace GalaWallet.Models;
+
 public class GalaTransferTokenRequest
 {
 	public string from { get; set; } = "";

@@ -1,3 +1,5 @@
+namespace GalaWallet.Models;
+
 public class WalletSecretPayload
 {
 	public WalletSecretType SecretType { get; set; }

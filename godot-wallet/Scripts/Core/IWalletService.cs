@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using GalaWallet.Models;
+
+namespace GalaWallet.Core;
 
 public interface IWalletService
 {

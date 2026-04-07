@@ -1,5 +1,9 @@
 using Godot;
 using System.Threading.Tasks;
+using GalaWallet.Models;
+using GalaWallet.UI;
+
+namespace GalaWallet.Core;
 
 public class WalletFacade
 {

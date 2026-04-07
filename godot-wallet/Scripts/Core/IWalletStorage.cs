@@ -1,3 +1,7 @@
+using GalaWallet.Models;
+
+namespace GalaWallet.Core;
+
 public interface IWalletStorage
 {
 	bool WalletExists();

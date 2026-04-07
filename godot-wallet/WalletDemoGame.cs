@@ -1,4 +1,5 @@
 using Godot;
+using GalaWallet.Core;
 
 public partial class WalletDemoGame : Control
 {

@@ -1,4 +1,7 @@
 using System.Collections.Generic;
+using GalaWallet.Models;
+
+namespace GalaWallet.Core;
 
 public class WalletState
 {

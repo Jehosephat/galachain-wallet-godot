@@ -2,6 +2,10 @@ using Godot;
 using System;
 using System.Text;
 using System.Collections.Generic;
+using GalaWallet.Core;
+using GalaWallet.Models;
+
+namespace GalaWallet.UI;
 
 public partial class GalaChainWallet : Control
 {
@@ -535,7 +539,7 @@ public partial class GalaChainWallet : Control
 		{
 			if(!toAddress.StartsWith("client|", StringComparison.OrdinalIgnoreCase))
 			{
-				error = "Recipient address must start with eht| or client|.";
+				error = "Recipient address must start with eth| or client|.";
 				return false;
 			}
 		}

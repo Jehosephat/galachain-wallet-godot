@@ -1,5 +1,6 @@
 using Godot;
-using System;
+
+namespace GalaWallet.Models;
 
 public partial class WalletAddressModel : Node
 {

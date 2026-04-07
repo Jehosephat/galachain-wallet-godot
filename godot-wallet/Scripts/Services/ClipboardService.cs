@@ -1,5 +1,6 @@
 using Godot;
-using System;
+
+namespace GalaWallet.Services;
 
 public partial class ClipboardService : Node
 {
