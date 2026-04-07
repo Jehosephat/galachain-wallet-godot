@@ -96,11 +96,11 @@ public partial class GalaChainWallet : Control
 		_transferToInput.TextChanged += OnTransferInputChanged;
 		_transferQuantityInput.TextChanged += OnTransferInputChanged;
 		
-		_walletService.LoadWalletMetadataIfPresent();
 		_uiReady = true;
 
 		if (_walletService != null)
 		{
+			_walletService.LoadWalletMetadataIfPresent();
 			RefreshUi();
 			Log("Wallet ready.");
 		}
