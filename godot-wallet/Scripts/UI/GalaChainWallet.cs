@@ -40,6 +40,10 @@ public partial class GalaChainWallet : Control
 	private string _pendingImportPrivateKey = "";
 	private string _pendingMnemonic = "";
 
+	private string? _pendingTransferTo;
+	private string? _pendingTransferQuantity;
+	private string? _pendingTransferSymbol;
+
 	public void Initialize(IWalletService walletService)
 	{
 		_walletService = walletService;
@@ -192,9 +196,9 @@ public partial class GalaChainWallet : Control
 		{
 			return;
 		}
-		
+
 		var walletService = _walletService!;
-		
+
 		if (!walletService.HasWallet() || !_walletService.IsUnlocked())
 		{
 			Log("Unlock the wallet before transferring.");
@@ -217,14 +221,91 @@ public partial class GalaChainWallet : Control
 			return;
 		}
 
-		_selectedTransferToken = balances[selectedIndex];
+		OpenTransferDialog(balances[selectedIndex], "", "");
+	}
+
+	public void RequestTransfer(string toAddress, string quantity, string tokenSymbol)
+	{
+		if (!EnsureService())
+		{
+			return;
+		}
+
+		var walletService = _walletService!;
+
+		if (!walletService.HasWallet())
+		{
+			Log("Create or import a wallet before transferring.");
+			return;
+		}
+
+		if (!walletService.IsUnlocked())
+		{
+			_pendingTransferTo = toAddress;
+			_pendingTransferQuantity = quantity;
+			_pendingTransferSymbol = tokenSymbol;
+			Log("Unlock the wallet to complete the transfer.");
+			OpenPasswordDialog(
+				PendingPasswordAction.UnlockWallet,
+				"Enter your wallet password to unlock."
+			);
+			return;
+		}
+
+		ExecuteTransferRequest(toAddress, quantity, tokenSymbol);
+	}
+
+	private void ExecuteTransferRequest(string toAddress, string quantity, string tokenSymbol)
+	{
+		var balances = _walletService!.GetBalances();
+		TokenBalanceModel? match = null;
+
+		foreach (var b in balances)
+		{
+			if (string.Equals(b.Symbol, tokenSymbol, StringComparison.OrdinalIgnoreCase))
+			{
+				match = b;
+				break;
+			}
+		}
+
+		if (match == null)
+		{
+			Log($"No balance found for token \"{tokenSymbol}\". Refresh balances and try again.");
+			return;
+		}
+
+		OpenTransferDialog(match, toAddress, quantity);
+	}
+
+	private void ConsumePendingTransfer()
+	{
+		if (_pendingTransferTo == null)
+		{
+			return;
+		}
+
+		string to = _pendingTransferTo;
+		string quantity = _pendingTransferQuantity ?? "";
+		string symbol = _pendingTransferSymbol ?? "";
+
+		_pendingTransferTo = null;
+		_pendingTransferQuantity = null;
+		_pendingTransferSymbol = null;
+
+		ExecuteTransferRequest(to, quantity, symbol);
+	}
+
+	private void OpenTransferDialog(TokenBalanceModel token, string toAddress, string quantity)
+	{
+		_selectedTransferToken = token;
 
 		_transferSelectedTokenLabel.Text =
 			$"Token: {_selectedTransferToken.Symbol} | Available: {_selectedTransferToken.AvailableAmount:0.########}";
 
-		_transferToInput.Text = "";
-		_transferQuantityInput.Text = "";
-		_transferSummaryLabel.Text = "";
+		_transferToInput.Text = toAddress;
+		_transferQuantityInput.Text = quantity;
+		UpdateTransferSummary();
 
 		_transferDialog.PopupCentered(new Vector2I(520, 240));
 		_transferToInput.GrabFocus();
@@ -305,6 +386,10 @@ public partial class GalaChainWallet : Control
 					}
 					RefreshUi();
 					Log(ok ? "Wallet unlocked." : "Unlock failed.");
+					if (ok)
+					{
+						ConsumePendingTransfer();
+					}
 					break;
 
 				case PendingPasswordAction.ImportMnemonic:

@@ -5,6 +5,7 @@ public partial class WalletDemoGame : Control
 	private WalletFacade _walletFacade = null!;
 	private Button _openWalletButton = null!;
 	private Button _closeWalletButton = null!;
+	private Button _makePurchaseButton = null!;
 	private Control _walletMount = null!;
 	private Label _gameStatusLabel = null!;
 
@@ -14,11 +15,13 @@ public partial class WalletDemoGame : Control
 
 		_openWalletButton = GetNode<Button>("%OpenWalletButton");
 		_closeWalletButton = GetNode<Button>("%CloseWalletButton");
+		_makePurchaseButton = GetNode<Button>("%MakePurchaseButton");
 		_walletMount = GetNode<Control>("%WalletMount");
 		_gameStatusLabel = GetNode<Label>("%GameStatusLabel");
 
 		_openWalletButton.Pressed += OnOpenWalletPressed;
 		_closeWalletButton.Pressed += OnCloseWalletPressed;
+		_makePurchaseButton.Pressed += OnMakePurchasePressed;
 
 		UpdateStatus();
 	}
@@ -32,6 +35,13 @@ public partial class WalletDemoGame : Control
 	private void OnCloseWalletPressed()
 	{
 		_walletFacade.CloseWallet();
+		UpdateStatus();
+	}
+
+	private void OnMakePurchasePressed()
+	{
+		_walletFacade.OpenWallet(_walletMount);
+		_walletFacade.RequestTransfer("client|5f58d8641586e117c5e68834", "15", "GALA");
 		UpdateStatus();
 	}
 

@@ -53,4 +53,14 @@ public class WalletFacade
 	{
 		await _walletService.RefreshBalancesAsync();
 	}
+
+	public void RequestTransfer(string toAddress, string quantity, string tokenSymbol)
+	{
+		if (_galaChainWallet == null)
+		{
+			return;
+		}
+
+		_galaChainWallet.RequestTransfer(toAddress, quantity, tokenSymbol);
+	}
 }
