@@ -3,9 +3,10 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 
-public partial class WalletDemo : Control
+public partial class GalaChainWallet : Control
 {
-	private IWalletService _walletService = new WalletService();
+	private IWalletService? _walletService;
+	private bool _uiReady = false;
 
 	private Label _statusLabel = null!;
 	private Label _addressValueLabel = null!;
@@ -38,6 +39,16 @@ public partial class WalletDemo : Control
 	private PendingPasswordAction _pendingPasswordAction = PendingPasswordAction.None;
 	private string _pendingImportPrivateKey = "";
 	private string _pendingMnemonic = "";
+
+	public void Initialize(IWalletService walletService)
+	{
+		_walletService = walletService;
+		
+		if(_uiReady)
+		{
+			RefreshUi();
+		}
+	}
 
 	public override void _Ready()
 	{
@@ -82,13 +93,52 @@ public partial class WalletDemo : Control
 		_transferQuantityInput.TextChanged += OnTransferInputChanged;
 		
 		_walletService.LoadWalletMetadataIfPresent();
+		_uiReady = true;
 
-		RefreshUi();
-		Log("Wallet demo ready.");
+		if (_walletService != null)
+		{
+			RefreshUi();
+			Log("Wallet ready.");
+		}
+		else
+		{
+			ShowUninitializedState();
+		}
+	}
+	
+	private void ShowUninitializedState()
+	{
+		_statusLabel.Text = "Status: Wallet not initialized";
+		_addressValueLabel.Text = "No wallet service";
+		_balancesList.Clear();
+		_balancesList.AddItem("Wallet unavailable");
+
+		_createWalletButton.Disabled = true;
+		_importWalletButton.Disabled = true;
+		_unlockButton.Disabled = true;
+		_lockButton.Disabled = true;
+		_copyAddressButton.Disabled = true;
+		_refreshBalancesButton.Disabled = true;
+
+		if (_transferButton != null)
+		{
+			_transferButton.Disabled = true;
+		}
+	}
+	
+	private bool EnsureService()
+	{
+		if (_walletService != null)
+		{
+			return true;
+		}
+
+		Log("Wallet service is not initialized.");
+		return false;
 	}
 
 	private void OnCreateWalletPressed()
-	{
+	{	
 		OpenPasswordDialog(
 			PendingPasswordAction.CreateWallet,
 	        "Choose a password to encrypt this wallet."
@@ -96,7 +146,7 @@ public partial class WalletDemo : Control
 	}
 	
 	private void OnImportWalletPressed()
-	{
+	{		
 		_importPrivateKeyInput.Text = "";
 		_importPrivateKeyDialog.PopupCentered(new Vector2I(500, 180));
 	}
@@ -111,7 +161,14 @@ public partial class WalletDemo : Control
 
 	private void OnLockPressed()
 	{
-		_walletService.Lock();
+		if (!EnsureService())
+		{
+			return;
+		}
+		
+		var walletService = _walletService!;
+		
+		walletService.Lock();
 		RefreshUi();
 		Log("Wallet locked.");
 	}
@@ -131,7 +188,14 @@ public partial class WalletDemo : Control
 	
 	private void OnTransferPressed()
 	{
-		if (!_walletService.HasWallet() || !_walletService.IsUnlocked())
+		if (!EnsureService())
+		{
+			return;
+		}
+		
+		var walletService = _walletService!;
+		
+		if (!walletService.HasWallet() || !_walletService.IsUnlocked())
 		{
 			Log("Unlock the wallet before transferring.");
 			return;
@@ -145,7 +209,7 @@ public partial class WalletDemo : Control
 		}
 
 		int selectedIndex = selected[0];
-		var balances = _walletService.GetBalances();
+		var balances = walletService.GetBalances();
 
 		if (selectedIndex < 0 || selectedIndex >= balances.Count)
 		{
@@ -186,6 +250,13 @@ public partial class WalletDemo : Control
 	
 	private async void OnPasswordDialogConfirmed()
 	{
+		if (!EnsureService())
+		{
+			return;
+		}
+		
+		var walletService = _walletService!;
+		
 		string password = _passwordInput.Text;
 
 		if (string.IsNullOrWhiteSpace(password))
@@ -199,11 +270,11 @@ public partial class WalletDemo : Control
 			switch (_pendingPasswordAction)
 			{
 				case PendingPasswordAction.CreateWallet:
-					_walletService.CreateWallet(password);
-					await _walletService.RefreshBalancesAsync();
+					walletService.CreateWallet(password);
+					await walletService.RefreshBalancesAsync();
 					RefreshUi();
 
-					var phrase = _walletService.ConsumePendingRecoveryPhrase();
+					var phrase = walletService.ConsumePendingRecoveryPhrase();
 					if (!string.IsNullOrWhiteSpace(phrase))
 					{
 						_simpleMessageDialog.Title = "Recovery Phrase";
@@ -219,25 +290,25 @@ public partial class WalletDemo : Control
 					break;
 
 				case PendingPasswordAction.ImportWallet:
-					_walletService.ImportPrivateKey(_pendingImportPrivateKey, password);
+					walletService.ImportPrivateKey(_pendingImportPrivateKey, password);
 					_pendingImportPrivateKey = "";
-					await _walletService.RefreshBalancesAsync();
+					await walletService.RefreshBalancesAsync();
 					RefreshUi();
 					Log("Imported wallet and saved encrypted wallet file.");
 					break;
 
 				case PendingPasswordAction.UnlockWallet:
-					bool ok = _walletService.Unlock(password);
+					bool ok = walletService.Unlock(password);
 					if (ok)
 					{
-						await _walletService.RefreshBalancesAsync();
+						await walletService.RefreshBalancesAsync();
 					}
 					RefreshUi();
 					Log(ok ? "Wallet unlocked." : "Unlock failed.");
 					break;
 
 				case PendingPasswordAction.ImportMnemonic:
-					_walletService.ImportMnemonic(_pendingMnemonic, password);
+					walletService.ImportMnemonic(_pendingMnemonic, password);
 					_pendingMnemonic = "";
 					RefreshUi();
 					Log("Imported wallet from recovery phrase and saved encrypted wallet file.");
@@ -286,10 +357,17 @@ public partial class WalletDemo : Control
 	
 	private async void OnRefreshBalancesPressed()
 	{
+		if (!EnsureService())
+		{
+			return;
+		}
+		
+		var walletService = _walletService!;
+		
 		try
 		{
 			Log("Refreshing balances from GalaChain...");
-			await _walletService.RefreshBalancesAsync();
+			await walletService.RefreshBalancesAsync();
 			RefreshUi();
 			Log("Balances refreshed.");
 		}
@@ -321,6 +399,13 @@ public partial class WalletDemo : Control
 	
 	private async void OnTransferDialogConfirmed()
 	{
+		if (!EnsureService())
+		{
+			return;
+		}
+		
+		var walletService = _walletService!;
+		
 		if (!TryBuildTransferDraft(out var draft, out var error))
 		{
 			Log($"Transfer failed: {error}");
@@ -331,7 +416,7 @@ public partial class WalletDemo : Control
 		try
 		{
 			Log($"Submitting transfer of {draft.Quantity} {draft.DisplaySymbol}...");
-			await _walletService.SubmitTransferAsync(draft);
+			await walletService.SubmitTransferAsync(draft);
 			RefreshUi();
 			Log("Transfer successful.");
 		}
@@ -424,6 +509,17 @@ public partial class WalletDemo : Control
 
 	private void RefreshUi()
 	{
+		if (!_uiReady)
+		{
+			return;
+		}
+
+		if (_walletService == null)
+		{
+			ShowUninitializedState();
+			return;
+		}
+
 		bool hasWallet = _walletService.HasWallet();
 		bool isUnlocked = _walletService.IsUnlocked();
 
@@ -447,39 +543,56 @@ public partial class WalletDemo : Control
 		_lockButton.Disabled = !hasWallet || !isUnlocked;
 		_copyAddressButton.Disabled = !hasWallet || !isUnlocked;
 		_refreshBalancesButton.Disabled = !hasWallet || !isUnlocked;
-		_importMnemonicButton.Disabled = hasWallet;
-		_transferButton.Disabled = !_walletService.HasWallet() || !_walletService.IsUnlocked();
+
+		if (_transferButton != null)
+		{
+			_transferButton.Disabled = !hasWallet || !isUnlocked;
+		}
 
 		RefreshBalances();
 	}
 
 	private string BuildStatusText()
 	{
-		if (!_walletService.HasWallet())
+		if (!EnsureService())
+		{
+			return "";
+		}
+		
+		var walletService = _walletService!;
+		
+		if (!walletService.HasWallet())
 			return "Status: No wallet";
 
-		return _walletService.IsUnlocked()
+		return walletService.IsUnlocked()
 			? "Status: Wallet unlocked"
 			: "Status: Wallet locked";
 	}
 		
 	private void RefreshBalances()
 	{
+		if (!EnsureService())
+		{
+			return;
+		}
+		
+		var walletService = _walletService!;
+		
 		_balancesList.Clear();
 
-		if (!_walletService.HasWallet())
+		if (!walletService.HasWallet())
 		{
 			_balancesList.AddItem("No wallet loaded");
 			return;
 		}
 
-		if (!_walletService.IsUnlocked())
+		if (!walletService.IsUnlocked())
 		{
 			_balancesList.AddItem("Wallet locked");
 			return;
 		}
 
-		var balances = _walletService.GetBalances();
+		var balances = walletService.GetBalances();
 
 		if (balances.Count == 0)
 		{

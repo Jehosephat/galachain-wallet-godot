@@ -1,0 +1,53 @@
+[gd_scene format=3 uid="uid://c43v11g5fqhtw"]
+
+[ext_resource type="Script" uid="uid://dqha2ej7cycqb" path="res://WalletDemoGame.cs" id="1_ujdtv"]
+
+[node name="WalletDemoGame" type="Control" unique_id=420758968]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ujdtv")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=192612167]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1924731341]
+layout_mode = 2
+
+[node name="GameTitleLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=34421712]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="OpenWalletButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=115309551]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Open Wallet"
+
+[node name="CloseWalletButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=263933419]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Close Wallet"
+
+[node name="GameStatusLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=696915932]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="WalletMount" type="Control" parent="." unique_id=698790039]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2

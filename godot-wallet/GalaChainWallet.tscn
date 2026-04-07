@@ -1,15 +1,15 @@
 [gd_scene format=3 uid="uid://fv60ouqa08tn"]
 
-[ext_resource type="Script" uid="uid://c2r21b632lfrx" path="res://Scripts/UI/WalletDemo.cs" id="1_gtf1u"]
+[ext_resource type="Script" uid="uid://c2r21b632lfrx" path="res://Scripts/UI/GalaChainWallet.cs" id="1_6juec"]
 
-[node name="WalletDemo" type="Control" unique_id=1618572581]
+[node name="GalaChainWallet" type="Control" unique_id=1618572581]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_gtf1u")
+script = ExtResource("1_6juec")
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=1154402397]
 layout_mode = 1
@@ -213,34 +213,32 @@ offset_bottom = 40.0
 [node name="TransferTokenLabel" type="Label" parent="TransferDialog/VBoxContainer" unique_id=1457299812]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Enter password"
+text = "Transfer Token"
 
 [node name="TransferSelectedTokenLabel" type="Label" parent="TransferDialog/VBoxContainer" unique_id=1604264929]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Enter password"
+text = "Enter Recipient"
 
 [node name="TransferToLabel" type="Label" parent="TransferDialog/VBoxContainer" unique_id=243025208]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Enter password"
+text = "To"
 
 [node name="TransferToInput" type="LineEdit" parent="TransferDialog/VBoxContainer" unique_id=859083486]
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "eth|..."
-secret = true
 
 [node name="TransferQuantityLabel" type="Label" parent="TransferDialog/VBoxContainer" unique_id=218269936]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Enter password"
+text = "Quantity"
 
 [node name="TransferQuantityInput" type="LineEdit" parent="TransferDialog/VBoxContainer" unique_id=871766991]
 unique_name_in_owner = true
 layout_mode = 2
-placeholder_text = "Amount"
-secret = true
+placeholder_text = "Quantity"
 
 [node name="TransferSummaryLabel" type="Label" parent="TransferDialog/VBoxContainer" unique_id=636228970]
 unique_name_in_owner = true
