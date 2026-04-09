@@ -9,11 +9,31 @@ Embedded in-game GalaChain wallet built as a Godot 4.x C#/.NET module. Opinionat
 - `godot-galachain-wallet-mvp-blueprint.md` — Design blueprint. All implementation decisions should reference this.
 - `PROJECT-ANALYSIS.md` — Architecture analysis and prioritized recommendations.
 - `PROGRESS.md` — Change log with implementation details. Update this when making changes.
+- `addons/galachain_wallet/INTEGRATION_GUIDE.md` — Developer-facing plugin usage guide. Update this when adding new features, API methods, or configuration options.
+
+## Project Structure
+
+The wallet is a Godot addon. Developers distribute `addons/galachain_wallet/` into their project.
+
+```
+addons/galachain_wallet/          <-- distributable addon
+  plugin.cfg
+  WalletPlugin.cs
+  scenes/
+    GalaChainWallet.tscn
+  Scripts/
+    Core/                         <-- services, interfaces, signing, storage, policy
+    Models/                       <-- DTOs, enums, state, network result types
+    UI/                           <-- wallet UI controller (3 partial class files)
+WalletDemoGame.tscn               <-- demo (not part of addon)
+WalletDemoGame.cs
+Tests/                            <-- xUnit tests (not part of addon)
+```
 
 ## Architecture
 
 ```
-WalletDemoGame (entry point)
+WalletDemoGame (entry point, outside addon)
   -> WalletFacade (game-facing API, narrow surface)
     -> WalletService (orchestrator, owns WalletState)
       -> DtoPolicyRegistry (validates operations via ITransactionPolicy)
@@ -21,7 +41,7 @@ WalletDemoGame (entry point)
       -> FileWalletStorage (encrypted keystore at user://wallet/wallet.json)
       -> GalaChainClient (balance fetch, dry-run)
       -> GalaTransferClient (transfer submission)
-      -> GalaSigner (canonical JSON -> keccak256 -> secp256k1)
+      -> GalaSigner (canonical JSON -> keccak256 -> secp256k1, self-verifying)
     -> GalaChainWallet (UI controller, Godot Control node)
 ```
 
@@ -82,6 +102,6 @@ The wallet auto-locks after 5 minutes of inactivity (`IdleTimeoutSeconds = 300`)
 ## Decisions and Deferrals
 
 - **`dtoOperation`**: Deferred — GalaChain Gateway doesn't support it. Revisit if GalaChain adds validation.
-- **Godot addon structure**: Not yet implemented. Currently flat `Scripts/` layout. Target `addons/galachain_wallet/` when ready to distribute.
+- **Godot addon structure**: Implemented. All wallet code lives under `addons/galachain_wallet/`. Demo and tests stay outside.
 - **DTO policy registry**: Implemented but currently single-operation. Will become more valuable when adding BurnToken, NFT transfers, etc.
 - **Mobile secure storage**: Out of scope for desktop MVP. `IWalletStorage` interface exists for future platform-specific implementations.

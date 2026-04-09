@@ -19,14 +19,14 @@
 
   <!-- Include source files directly to avoid Godot SDK dependency -->
   <ItemGroup>
-    <Compile Include="..\Scripts\Core\GalaCanonicalJson.cs" Link="Core\GalaCanonicalJson.cs" />
-    <Compile Include="..\Scripts\Core\GalaSigner.cs" Link="Core\GalaSigner.cs" />
-    <Compile Include="..\Scripts\Core\PasswordCryptoService.cs" Link="Core\PasswordCryptoService.cs" />
-    <Compile Include="..\Scripts\Models\GalaTokenInstance.cs" Link="Models\GalaTokenInstance.cs" />
-    <Compile Include="..\Scripts\Models\GalaTransferTokenRequest.cs" Link="Models\GalaTransferTokenRequest.cs" />
-    <Compile Include="..\Scripts\Models\EncryptedWalletRecord.cs" Link="Models\EncryptedWalletRecord.cs" />
-    <Compile Include="..\Scripts\Models\WalletSecretPayload.cs" Link="Models\WalletSecretPayload.cs" />
-    <Compile Include="..\Scripts\Models\WalletSecretType.cs" Link="Models\WalletSecretType.cs" />
+    <Compile Include="..\addons\galachain_wallet\Scripts\Core\GalaCanonicalJson.cs" Link="Core\GalaCanonicalJson.cs" />
+    <Compile Include="..\addons\galachain_wallet\Scripts\Core\GalaSigner.cs" Link="Core\GalaSigner.cs" />
+    <Compile Include="..\addons\galachain_wallet\Scripts\Core\PasswordCryptoService.cs" Link="Core\PasswordCryptoService.cs" />
+    <Compile Include="..\addons\galachain_wallet\Scripts\Models\GalaTokenInstance.cs" Link="Models\GalaTokenInstance.cs" />
+    <Compile Include="..\addons\galachain_wallet\Scripts\Models\GalaTransferTokenRequest.cs" Link="Models\GalaTransferTokenRequest.cs" />
+    <Compile Include="..\addons\galachain_wallet\Scripts\Models\EncryptedWalletRecord.cs" Link="Models\EncryptedWalletRecord.cs" />
+    <Compile Include="..\addons\galachain_wallet\Scripts\Models\WalletSecretPayload.cs" Link="Models\WalletSecretPayload.cs" />
+    <Compile Include="..\addons\galachain_wallet\Scripts\Models\WalletSecretType.cs" Link="Models\WalletSecretType.cs" />
   </ItemGroup>
 
   <ItemGroup>

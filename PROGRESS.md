@@ -168,6 +168,20 @@ Six fixes applied in one pass:
   - `TaskCanceledException` is caught and returned as `NetworkResult.TransportError` with a descriptive timeout message.
 - **Files**: `GalaChainNetworkConfig.cs`, `GalaChainClient.cs`, `GalaTransferClient.cs`
 
+### Refactor into Godot addon structure for distribution
+- **Problem**: Wallet code lived in a flat `Scripts/` directory, tightly coupled to the demo project. Not distributable as a reusable Godot addon.
+- **Changes**:
+  - Moved all wallet source files (34 `.cs` + `.uid` files), the wallet scene, into `addons/galachain_wallet/`.
+  - Structure: `addons/galachain_wallet/plugin.cfg`, `WalletPlugin.cs`, `scenes/GalaChainWallet.tscn`, `Scripts/Core/`, `Scripts/Models/`, `Scripts/UI/`.
+  - Created `plugin.cfg` (name, description, author, version).
+  - Created minimal `WalletPlugin.cs` extending `EditorPlugin`.
+  - Updated `GalaChainWallet.tscn` script path: `res://addons/galachain_wallet/Scripts/UI/GalaChainWallet.cs`.
+  - Updated `WalletFacade.cs` scene load: `res://addons/galachain_wallet/scenes/GalaChainWallet.tscn`.
+  - Updated test project `.csproj` source file include paths.
+  - Removed old empty `Scripts/` directory.
+  - `WalletDemoGame.*` and `Tests/` remain outside the addon — they are not part of the distributable.
+- **To use in another project**: Copy `addons/galachain_wallet/` into the target project's `addons/` directory. Add the Nethereum NuGet packages to the target's `.csproj`. Enable the plugin in Godot's Project Settings.
+
 ### Signature verification before submitting
 - **Problem**: If signing produced a bad signature (corrupted state, key mismatch), the invalid transaction would be submitted to GalaChain and fail with a vague server error.
 - **Change**: After signing, `GalaSigner.SignTransfer` now recovers the Ethereum address from the signature and verifies it matches the signer's key address. If they don't match, it throws `InvalidOperationException` with a clear message — the transaction is never submitted.

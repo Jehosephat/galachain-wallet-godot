@@ -15,7 +15,7 @@ public class WalletFacade
 	{
 		_walletService = walletService ?? new WalletService();
 		_walletService.LoadWalletMetadataIfPresent();
-		_galaChainWalletScene = GD.Load<PackedScene>("res://GalaChainWallet.tscn");
+		_galaChainWalletScene = GD.Load<PackedScene>("res://addons/galachain_wallet/scenes/GalaChainWallet.tscn");
 	}
 
 	public void OpenWallet(Control parent)
