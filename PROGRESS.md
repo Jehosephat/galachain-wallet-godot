@@ -146,6 +146,19 @@ Six fixes applied in one pass:
 - **New files**: `Tests/Godot-Wallet.Tests.csproj`, `Tests/GalaCanonicalJsonTests.cs`, `Tests/GalaSignerTests.cs`, `Tests/PasswordCryptoServiceTests.cs`
 - **Run with**: `dotnet test godot-wallet/Tests/`
 
+### Break up GalaChainWallet.cs into smaller UI controllers
+- **Problem**: `GalaChainWallet.cs` was 730 lines handling initialization, state display, wallet actions, and transfer logic all in one file.
+- **Changes**:
+  - Split into 3 partial class files using C# `partial class`:
+    - **`GalaChainWallet.cs`** (~230 lines) — Fields, `Initialize`, `_Ready`, `_Process`, idle timer, `RefreshUi`, `RefreshBalances`, `Log`, `EnsureService`, `ShowUninitializedState`.
+    - **`GalaChainWallet.WalletActions.cs`** (~210 lines) — Create, import, unlock, lock, copy address, mnemonic import, password dialog handling, balance refresh.
+    - **`GalaChainWallet.Transfer.cs`** (~260 lines) — Transfer button/dialog, `RequestTransfer`, pending transfer stash/consume, dry-run preview, transfer validation/submission.
+  - Removed dead code: `BuildStatusText()` method (was defined but never called).
+  - Fixed the double-brace `Log` method body.
+  - Also fixed `_importPrivateKeyInput`/`_passwordDialog` being on the same line in `_Ready` (formatting).
+  - Added `<Compile Remove="Tests/**" />` to `Godot-Wallet.csproj` so the Godot build doesn't pick up test project files.
+- **Files**: `Scripts/UI/GalaChainWallet.cs` (rewritten), `Scripts/UI/GalaChainWallet.WalletActions.cs` (new), `Scripts/UI/GalaChainWallet.Transfer.cs` (new), `Godot-Wallet.csproj`
+
 ---
 
 ## Known issues remaining

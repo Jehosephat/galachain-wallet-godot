@@ -1,6 +1,5 @@
 using Godot;
 using System;
-using System.Text;
 using System.Collections.Generic;
 using GalaWallet.Core;
 using GalaWallet.Models;
@@ -53,8 +52,8 @@ public partial class GalaChainWallet : Control
 	public void Initialize(IWalletService walletService)
 	{
 		_walletService = walletService;
-		
-		if(_uiReady)
+
+		if (_uiReady)
 		{
 			RefreshUi();
 		}
@@ -74,7 +73,8 @@ public partial class GalaChainWallet : Control
 		_refreshBalancesButton = GetNode<Button>("%RefreshBalancesButton");
 		_simpleMessageDialog = GetNode<AcceptDialog>("%SimpleMessageDialog");
 		_importPrivateKeyDialog = GetNode<ConfirmationDialog>("%ImportPrivateKeyDialog");
-		_importPrivateKeyInput = GetNode<LineEdit>("%ImportPrivateKeyInput");_passwordDialog = GetNode<ConfirmationDialog>("%PasswordDialog");
+		_importPrivateKeyInput = GetNode<LineEdit>("%ImportPrivateKeyInput");
+		_passwordDialog = GetNode<ConfirmationDialog>("%PasswordDialog");
 		_passwordDialogLabel = GetNode<Label>("%PasswordDialogLabel");
 		_passwordInput = GetNode<LineEdit>("%PasswordInput");
 		_importMnemonicButton = GetNode<Button>("%ImportMnemonicButton");
@@ -101,7 +101,7 @@ public partial class GalaChainWallet : Control
 		_transferDialog.Confirmed += OnTransferDialogConfirmed;
 		_transferToInput.TextChanged += OnTransferInputChanged;
 		_transferQuantityInput.TextChanged += OnTransferInputChanged;
-		
+
 		_uiReady = true;
 		_lastActivityTime = Time.GetTicksMsec() / 1000.0;
 
@@ -155,7 +155,7 @@ public partial class GalaChainWallet : Control
 			_transferButton.Disabled = true;
 		}
 	}
-	
+
 	private bool EnsureService()
 	{
 		if (_walletService != null)
@@ -165,453 +165,6 @@ public partial class GalaChainWallet : Control
 
 		Log("Wallet service is not initialized.");
 		return false;
-	}
-
-	private void OnCreateWalletPressed()
-	{	
-		OpenPasswordDialog(
-			PendingPasswordAction.CreateWallet,
-	        "Choose a password to encrypt this wallet."
-		);
-	}
-	
-	private void OnImportWalletPressed()
-	{		
-		_importPrivateKeyInput.Text = "";
-		_importPrivateKeyDialog.PopupCentered(new Vector2I(500, 180));
-	}
-
-	private void OnUnlockPressed()
-	{
-		OpenPasswordDialog(
-			PendingPasswordAction.UnlockWallet,
-	        "Enter your wallet password to unlock."
-		);
-	}
-
-	private void OnLockPressed()
-	{
-		if (!EnsureService())
-		{
-			return;
-		}
-		
-		var walletService = _walletService!;
-		
-		walletService.Lock();
-		RefreshUi();
-		Log("Wallet locked.");
-	}
-
-	private void OnCopyAddressPressed()
-	{
-		string address = _walletService.GetAddress();
-		if (string.IsNullOrWhiteSpace(address))
-		{
-			Log("No address to copy.");
-			return;
-		}
-
-		DisplayServer.ClipboardSet(address);
-		ResetIdleTimer();
-		Log($"Copied address: {address}");
-	}
-	
-	private void OnTransferPressed()
-	{
-		if (!EnsureService())
-		{
-			return;
-		}
-
-		var walletService = _walletService!;
-
-		if (!walletService.HasWallet() || !_walletService.IsUnlocked())
-		{
-			Log("Unlock the wallet before transferring.");
-			return;
-		}
-
-		var selected = _balancesList.GetSelectedItems();
-		if (selected.Length == 0)
-		{
-			Log("Select a token balance first.");
-			return;
-		}
-
-		int selectedIndex = selected[0];
-		var balances = walletService.GetBalances();
-
-		if (selectedIndex < 0 || selectedIndex >= balances.Count)
-		{
-			Log("Selected balance index was invalid.");
-			return;
-		}
-
-		OpenTransferDialog(balances[selectedIndex], "", "");
-	}
-
-	public void RequestTransfer(string toAddress, string quantity, string tokenSymbol)
-	{
-		if (!EnsureService())
-		{
-			return;
-		}
-
-		var walletService = _walletService!;
-
-		if (!walletService.HasWallet())
-		{
-			Log("Create or import a wallet before transferring.");
-			return;
-		}
-
-		if (!walletService.IsUnlocked())
-		{
-			_pendingTransferTo = toAddress;
-			_pendingTransferQuantity = quantity;
-			_pendingTransferSymbol = tokenSymbol;
-			Log("Unlock the wallet to complete the transfer.");
-			OpenPasswordDialog(
-				PendingPasswordAction.UnlockWallet,
-				"Enter your wallet password to unlock."
-			);
-			return;
-		}
-
-		ExecuteTransferRequest(toAddress, quantity, tokenSymbol);
-	}
-
-	private void ExecuteTransferRequest(string toAddress, string quantity, string tokenSymbol)
-	{
-		var balances = _walletService!.GetBalances();
-		TokenBalanceModel? match = null;
-
-		foreach (var b in balances)
-		{
-			if (string.Equals(b.Symbol, tokenSymbol, StringComparison.OrdinalIgnoreCase))
-			{
-				match = b;
-				break;
-			}
-		}
-
-		if (match == null)
-		{
-			Log($"No balance found for token \"{tokenSymbol}\". Refresh balances and try again.");
-			return;
-		}
-
-		OpenTransferDialog(match, toAddress, quantity);
-	}
-
-	private void ConsumePendingTransfer()
-	{
-		if (_pendingTransferTo == null)
-		{
-			return;
-		}
-
-		string to = _pendingTransferTo;
-		string quantity = _pendingTransferQuantity ?? "";
-		string symbol = _pendingTransferSymbol ?? "";
-
-		_pendingTransferTo = null;
-		_pendingTransferQuantity = null;
-		_pendingTransferSymbol = null;
-
-		ExecuteTransferRequest(to, quantity, symbol);
-	}
-
-	private void OpenTransferDialog(TokenBalanceModel token, string toAddress, string quantity)
-	{
-		ResetIdleTimer();
-		_selectedTransferToken = token;
-
-		_transferSelectedTokenLabel.Text =
-			$"Token: {_selectedTransferToken.Symbol} | Available: {_selectedTransferToken.AvailableAmount:0.########}";
-
-		_transferToInput.Text = toAddress;
-		_transferQuantityInput.Text = quantity;
-		UpdateTransferSummary();
-
-		_transferDialog.PopupCentered(new Vector2I(520, 240));
-		_transferToInput.GrabFocus();
-	}
-	
-	private void OnImportPrivateKeyConfirmed()
-	{
-		var privateKey = _importPrivateKeyInput.Text.Trim();
-
-		if (string.IsNullOrWhiteSpace(privateKey))
-		{
-			Log("Import failed: private key was empty.");
-			return;
-		}
-
-		_pendingImportPrivateKey = privateKey;
-
-		OpenPasswordDialog(
-			PendingPasswordAction.ImportWallet,
-	        "Enter a password to encrypt the imported wallet."
-		);
-	}
-	
-	private async void OnPasswordDialogConfirmed()
-	{
-		if (!EnsureService())
-		{
-			return;
-		}
-		
-		var walletService = _walletService!;
-		
-		string password = _passwordInput.Text;
-
-		if (string.IsNullOrWhiteSpace(password))
-		{
-			Log("Password entry was empty.");
-			return;
-		}
-
-		ResetIdleTimer();
-
-		try
-		{
-			switch (_pendingPasswordAction)
-			{
-				case PendingPasswordAction.CreateWallet:
-					walletService.CreateWallet(password);
-					await walletService.RefreshBalancesAsync();
-					RefreshUi();
-
-					var phrase = walletService.ConsumePendingRecoveryPhrase();
-					if (!string.IsNullOrWhiteSpace(phrase))
-					{
-						_simpleMessageDialog.Title = "Recovery Phrase";
-						_simpleMessageDialog.DialogText =
-							"Write this down and store it safely.\n\n" +
-							"This is the only time it will be shown:\n\n" +
-							phrase;
-
-						_simpleMessageDialog.PopupCentered();
-					}
-
-					Log("Created wallet and saved encrypted wallet file.");
-					break;
-
-				case PendingPasswordAction.ImportWallet:
-					walletService.ImportPrivateKey(_pendingImportPrivateKey, password);
-					_pendingImportPrivateKey = "";
-					await walletService.RefreshBalancesAsync();
-					RefreshUi();
-					Log("Imported wallet and saved encrypted wallet file.");
-					break;
-
-				case PendingPasswordAction.UnlockWallet:
-					bool ok = walletService.Unlock(password);
-					if (ok)
-					{
-						await walletService.RefreshBalancesAsync();
-					}
-					RefreshUi();
-					Log(ok ? "Wallet unlocked." : "Unlock failed.");
-					if (ok)
-					{
-						ConsumePendingTransfer();
-					}
-					break;
-
-				case PendingPasswordAction.ImportMnemonic:
-					walletService.ImportMnemonic(_pendingMnemonic, password);
-					_pendingMnemonic = "";
-					RefreshUi();
-					Log("Imported wallet from recovery phrase and saved encrypted wallet file.");
-					break;
-
-				default:
-					Log("No password action was pending.");
-					break;
-			}
-		}
-		catch (System.Exception ex)
-		{
-			Log($"Password action failed: {ex.Message}");
-		}
-		finally
-		{
-			_pendingPasswordAction = PendingPasswordAction.None;
-			_passwordInput.Text = "";
-		}
-	}
-	
-	private void OnImportMnemonicPressed()
-	{
-		_importMnemonicInput.Text = "";
-		_importMnemonicDialog.PopupCentered(new Vector2I(620, 180));
-		_importMnemonicInput.GrabFocus();
-	}
-
-	private void OnImportMnemonicConfirmed()
-	{
-		string mnemonic = _importMnemonicInput.Text.Trim();
-
-		if (string.IsNullOrWhiteSpace(mnemonic))
-		{
-			Log("Mnemonic import failed: phrase was empty.");
-			return;
-		}
-
-		_pendingMnemonic = mnemonic;
-
-		OpenPasswordDialog(
-			PendingPasswordAction.ImportMnemonic,
-	        "Enter a password to encrypt the restored wallet."
-		);
-	}
-	
-	private async void OnRefreshBalancesPressed()
-	{
-		if (!EnsureService())
-		{
-			return;
-		}
-		
-		var walletService = _walletService!;
-		
-		ResetIdleTimer();
-
-		Log("Refreshing balances from GalaChain...");
-		var result = await walletService.RefreshBalancesAsync();
-		RefreshUi();
-
-		if (result.IsSuccess)
-			Log("Balances refreshed.");
-		else
-			Log($"Balance refresh failed: {result.ErrorMessage}");
-	}
-	
-	private void OnTransferInputChanged(string _newText)
-	{
-		UpdateTransferSummary();
-	}
-
-	private void UpdateTransferSummary()
-	{
-		if (!TryBuildTransferDraft(out var draft, out var error))
-		{
-			_transferSummaryLabel.Text = string.IsNullOrWhiteSpace(error)
-				? ""
-				: $"Preview unavailable: {error}";
-			return;
-		}
-
-		_transferSummaryLabel.Text =
-			$"You are about to transfer {draft.Quantity} {draft.DisplaySymbol}\n" +
-			$"To: {draft.ToAddress}\n" +
-			$"Estimated fee: loading...";
-
-		RunDryRunPreview(draft);
-	}
-
-	private async void RunDryRunPreview(TransferDraft draft)
-	{
-		if (_walletService == null || !_walletService.IsUnlocked())
-			return;
-
-		var result = await _walletService.PreviewTransferAsync(draft);
-
-		string feeDisplay;
-		if (!result.IsSuccess)
-		{
-			feeDisplay = result.ErrorKind == NetworkErrorKind.TransportError
-				? "unavailable (network error)"
-				: $"unavailable ({result.ErrorMessage})";
-		}
-		else if (!result.Data.WouldSucceed)
-		{
-			feeDisplay = $"Preview failed: {result.Data.Message}";
-		}
-		else
-		{
-			feeDisplay = decimal.TryParse(result.Data.EstimatedFee,
-				System.Globalization.NumberStyles.Any,
-				System.Globalization.CultureInfo.InvariantCulture,
-				out var feeAmount) && feeAmount > 0m
-				? $"{feeAmount:0.########} {result.Data.FeeToken}".Trim()
-				: "None";
-		}
-
-		_transferSummaryLabel.Text =
-			$"You are about to transfer {draft.Quantity} {draft.DisplaySymbol}\n" +
-			$"To: {draft.ToAddress}\n" +
-			$"Estimated fee: {feeDisplay}";
-	}
-
-	private async void OnTransferDialogConfirmed()
-	{
-		if (!EnsureService())
-		{
-			return;
-		}
-
-		ResetIdleTimer();
-		var walletService = _walletService!;
-
-		if (!TryBuildTransferDraft(out var draft, out var error))
-		{
-			Log($"Transfer failed: {error}");
-			UpdateTransferSummary();
-			return;
-		}
-
-		Log($"Submitting transfer of {draft.Quantity} {draft.DisplaySymbol}...");
-		var result = await walletService.SubmitTransferAsync(draft);
-		RefreshUi();
-
-		if (result.IsSuccess)
-			Log("Transfer successful.");
-		else
-			Log($"Transfer failed: {result.ErrorMessage}");
-	}
-	
-	private bool TryBuildTransferDraft(out TransferDraft draft, out string error)
-	{
-		draft = new TransferDraft();
-		error = "";
-
-		if (_selectedTransferToken == null)
-		{
-			error = "No token selected.";
-			return false;
-		}
-
-		string toAddress = _transferToInput.Text.Trim();
-		string quantityText = _transferQuantityInput.Text.Trim();
-
-		draft = new TransferDraft
-		{
-			ToAddress = toAddress,
-			Quantity = quantityText,
-			DisplaySymbol = _selectedTransferToken.Symbol,
-			TokenInstance = new GalaTokenInstance
-			{
-				collection = _selectedTransferToken.Collection,
-				category = _selectedTransferToken.Category,
-				type = _selectedTransferToken.Type,
-				additionalKey = _selectedTransferToken.AdditionalKey,
-				instance = _selectedTransferToken.Instance
-			}
-		};
-
-		var result = _walletService!.ValidateTransfer(draft, _selectedTransferToken.AvailableAmount);
-		if (!result.IsValid)
-		{
-			error = result.Error;
-			return false;
-		}
-
-		return true;
 	}
 
 	private void RefreshUi()
@@ -659,32 +212,15 @@ public partial class GalaChainWallet : Control
 		RefreshBalances();
 	}
 
-	private string BuildStatusText()
-	{
-		if (!EnsureService())
-		{
-			return "";
-		}
-		
-		var walletService = _walletService!;
-		
-		if (!walletService.HasWallet())
-			return "Status: No wallet";
-
-		return walletService.IsUnlocked()
-			? "Status: Wallet unlocked"
-			: "Status: Wallet locked";
-	}
-		
 	private void RefreshBalances()
 	{
 		if (!EnsureService())
 		{
 			return;
 		}
-		
+
 		var walletService = _walletService!;
-		
+
 		_balancesList.Clear();
 
 		if (!walletService.HasWallet())
@@ -713,18 +249,8 @@ public partial class GalaChainWallet : Control
 		}
 	}
 
-	private void Log(string message){
-		{
-			_logOutput.AppendText($"{message}\n");
-		}
-	}
-
-	private void OpenPasswordDialog(PendingPasswordAction action, string prompt)
+	private void Log(string message)
 	{
-		_pendingPasswordAction = action;
-		_passwordDialogLabel.Text = prompt;
-		_passwordInput.Text = "";
-		_passwordDialog.PopupCentered(new Vector2I(420, 160));
-		_passwordInput.GrabFocus();
+		_logOutput.AppendText($"{message}\n");
 	}
 }

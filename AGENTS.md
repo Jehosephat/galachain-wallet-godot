@@ -36,6 +36,12 @@ WalletDemoGame (entry point)
 
 ## Coding Patterns
 
+### UI controller split via partial classes
+`GalaChainWallet` is a single Godot node with one script, split across 3 files using C# `partial class`:
+- `GalaChainWallet.cs` — Fields, initialization, lifecycle, state display, logging
+- `GalaChainWallet.WalletActions.cs` — Create, import, unlock, lock, password dialog
+- `GalaChainWallet.Transfer.cs` — Transfer flow, dry-run preview, validation, submit
+
 ### Network calls return `NetworkResult<T>`, not exceptions
 All network operations return `NetworkResult<T>` with `Success`, `Rejected`, `TransportError`, or `ParseError` variants. The UI checks `result.IsSuccess` — no try/catch for network errors.
 
