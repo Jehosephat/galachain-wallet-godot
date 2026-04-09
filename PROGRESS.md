@@ -123,6 +123,17 @@ Six fixes applied in one pass:
 - **New file**: `Scripts/Models/NetworkResult.cs`
 - **Modified files**: `IGalaChainClient.cs`, `GalaChainClient.cs`, `IGalaTransferClient.cs`, `GalaTransferClient.cs`, `IWalletService.cs`, `WalletService.cs`, `GalaChainWallet.cs`
 
+### Unit tests for serializer, signer, and crypto service
+- **Problem**: Blueprint (Section 21) requires unit tests for the core signing and crypto components. None existed.
+- **Changes**:
+  - Created `Tests/` xUnit test project (`Godot-Wallet.Tests.csproj`) that links source files directly from the main project to avoid Godot SDK dependency issues.
+  - **GalaCanonicalJsonTests** (10 tests): alphabetical key sorting, nested object sorting, root-level `signature`/`trace` exclusion, nested signature preservation, camelCase property names, array handling, null values, deterministic TransferToken output, field ordering verification.
+  - **GalaSignerTests** (5 tests): signature population, deterministic signatures, different data produces different signatures, correct signature length (132 chars / 65 bytes), stable hash across identical inputs.
+  - **PasswordCryptoServiceTests** (6 tests): mnemonic encrypt/decrypt round-trip, private key round-trip, wrong password throws, different ciphertext each time (random salt/nonce), record metadata correctness, custom iteration count.
+- **Result**: 21 tests, all passing.
+- **New files**: `Tests/Godot-Wallet.Tests.csproj`, `Tests/GalaCanonicalJsonTests.cs`, `Tests/GalaSignerTests.cs`, `Tests/PasswordCryptoServiceTests.cs`
+- **Run with**: `dotnet test godot-wallet/Tests/`
+
 ---
 
 ## Known issues remaining
@@ -132,5 +143,5 @@ See `PROJECT-ANALYSIS.md` Section 5 for the full critical issues list. Key items
 - ~~`GalaCanonicalJson` does not exclude `signature`/`trace` fields~~ — Fixed
 - ~~No DTO policy registry / allowlist enforcement~~ — Fixed
 - ~~No idle timeout / auto-lock~~ — Fixed (5-minute timeout)
-- No unit tests
+- ~~No unit tests~~ — Fixed (21 tests: serializer, signer, crypto)
 - ~~Interface/class file name swap (`GalaTransferClient.cs` ↔ `IGalaTransferClient.cs`)~~ — Fixed

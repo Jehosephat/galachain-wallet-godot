@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>GalaWallet.Tests</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="xunit" Version="2.5.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+    <PackageReference Include="Nethereum.Signer" Version="5.8.0" />
+  </ItemGroup>
+
+  <!-- Include source files directly to avoid Godot SDK dependency -->
+  <ItemGroup>
+    <Compile Include="..\Scripts\Core\GalaCanonicalJson.cs" Link="Core\GalaCanonicalJson.cs" />
+    <Compile Include="..\Scripts\Core\GalaSigner.cs" Link="Core\GalaSigner.cs" />
+    <Compile Include="..\Scripts\Core\PasswordCryptoService.cs" Link="Core\PasswordCryptoService.cs" />
+    <Compile Include="..\Scripts\Models\GalaTokenInstance.cs" Link="Models\GalaTokenInstance.cs" />
+    <Compile Include="..\Scripts\Models\GalaTransferTokenRequest.cs" Link="Models\GalaTransferTokenRequest.cs" />
+    <Compile Include="..\Scripts\Models\EncryptedWalletRecord.cs" Link="Models\EncryptedWalletRecord.cs" />
+    <Compile Include="..\Scripts\Models\WalletSecretPayload.cs" Link="Models\WalletSecretPayload.cs" />
+    <Compile Include="..\Scripts\Models\WalletSecretType.cs" Link="Models\WalletSecretType.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>
