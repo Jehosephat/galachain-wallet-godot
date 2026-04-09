@@ -168,6 +168,10 @@ Six fixes applied in one pass:
   - `TaskCanceledException` is caught and returned as `NetworkResult.TransportError` with a descriptive timeout message.
 - **Files**: `GalaChainNetworkConfig.cs`, `GalaChainClient.cs`, `GalaTransferClient.cs`
 
+### Remove dead code
+- **Removed**: `ClipboardService.cs` (empty stub, unused), `WalletAddressModel.cs` (empty stub, unused), their `.uid` files, and the now-empty `Scripts/Services/` directory. `BuildStatusText()` was already removed in #16.
+- **Updated**: `AGENTS.md` — removed `GalaWallet.Services` namespace entry.
+
 ---
 
 ## Known issues remaining

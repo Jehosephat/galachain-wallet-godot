@@ -30,7 +30,6 @@ WalletDemoGame (entry point)
 - `GalaWallet.Core` — Services, interfaces, signing, storage, policy registry
 - `GalaWallet.Models` — DTOs, enums, state models, network result types
 - `GalaWallet.UI` — Wallet UI controller
-- `GalaWallet.Services` — Platform service stubs (clipboard, etc.)
 - `GalaWallet.Tests` — xUnit test project (not distributed with plugin)
 - `WalletDemoGame` — Global namespace (demo entry point, not part of the wallet module)
 

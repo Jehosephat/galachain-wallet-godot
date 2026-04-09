@@ -43,7 +43,12 @@ public partial class GalaChainWallet
 
 	private void OnCopyAddressPressed()
 	{
-		string address = _walletService.GetAddress();
+		if (!EnsureService())
+		{
+			return;
+		}
+
+		string address = _walletService!.GetAddress();
 		if (string.IsNullOrWhiteSpace(address))
 		{
 			Log("No address to copy.");
