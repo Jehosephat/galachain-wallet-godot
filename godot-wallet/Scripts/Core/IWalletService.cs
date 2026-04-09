@@ -15,10 +15,10 @@ public interface IWalletService
 	bool Unlock(string password);
 	void Lock();
 	List<TokenBalanceModel> GetBalances();
-	Task RefreshBalancesAsync();
+	Task<NetworkResult<List<TokenBalanceModel>>> RefreshBalancesAsync();
 	string ConsumePendingRecoveryPhrase();
 	void LoadWalletMetadataIfPresent();
 	ValidationResult ValidateTransfer(TransferDraft draft, decimal availableBalance);
-	Task<TransferPreviewResult> PreviewTransferAsync(TransferDraft draft);
-	Task SubmitTransferAsync(TransferDraft draft);
+	Task<NetworkResult<TransferPreviewResult>> PreviewTransferAsync(TransferDraft draft);
+	Task<NetworkResult<string>> SubmitTransferAsync(TransferDraft draft);
 }

@@ -17,23 +17,27 @@ public class GalaTransferClient : IGalaTransferClient
 		_config = config ?? new GalaChainNetworkConfig();
 	}
 
-	public async Task<string> TransferAsync(GalaTransferTokenRequest request, string walletAlias)
+	public async Task<NetworkResult<string>> TransferAsync(GalaTransferTokenRequest request, string walletAlias)
 	{
 		string json = JsonSerializer.Serialize(request);
 
-		using var content = new StringContent(json, Encoding.UTF8, "application/json");
-		using var httpRequest = new HttpRequestMessage(HttpMethod.Post, _config.TransferTokenUrl);
-		httpRequest.Content = content;
-
-		using var response = await Http.SendAsync(httpRequest);
-		string body = await response.Content.ReadAsStringAsync();
-
-		if (!response.IsSuccessStatusCode)
+		try
 		{
-			throw new InvalidOperationException(
-				$"Transfer failed: {(int)response.StatusCode} {response.ReasonPhrase}. Body: {body}");
-		}
+			using var content = new StringContent(json, Encoding.UTF8, "application/json");
+			using var httpRequest = new HttpRequestMessage(HttpMethod.Post, _config.TransferTokenUrl);
+			httpRequest.Content = content;
 
-		return body;
+			using var response = await Http.SendAsync(httpRequest);
+			string body = await response.Content.ReadAsStringAsync();
+
+			if (!response.IsSuccessStatusCode)
+				return NetworkResult<string>.Rejected(body, (int)response.StatusCode);
+
+			return NetworkResult<string>.Success(body);
+		}
+		catch (HttpRequestException ex)
+		{
+			return NetworkResult<string>.TransportError(ex.Message);
+		}
 	}
 }

@@ -481,17 +481,14 @@ public partial class GalaChainWallet : Control
 		
 		ResetIdleTimer();
 
-		try
-		{
-			Log("Refreshing balances from GalaChain...");
-			await walletService.RefreshBalancesAsync();
-			RefreshUi();
+		Log("Refreshing balances from GalaChain...");
+		var result = await walletService.RefreshBalancesAsync();
+		RefreshUi();
+
+		if (result.IsSuccess)
 			Log("Balances refreshed.");
-		}
-		catch (System.Exception ex)
-		{
-			Log($"Balance refresh failed: {ex.Message}");
-		}
+		else
+			Log($"Balance refresh failed: {result.ErrorMessage}");
 	}
 	
 	private void OnTransferInputChanged(string _newText)
@@ -522,37 +519,33 @@ public partial class GalaChainWallet : Control
 		if (_walletService == null || !_walletService.IsUnlocked())
 			return;
 
-		try
-		{
-			var preview = await _walletService.PreviewTransferAsync(draft);
+		var result = await _walletService.PreviewTransferAsync(draft);
 
-			string feeDisplay = "None";
-			if (preview.WouldSucceed)
-			{
-				feeDisplay = decimal.TryParse(preview.EstimatedFee,
-					System.Globalization.NumberStyles.Any,
-					System.Globalization.CultureInfo.InvariantCulture,
-					out var feeAmount) && feeAmount > 0m
-					? $"{feeAmount:0.########} {preview.FeeToken}".Trim()
-					: "None";
-			}
-			else
-			{
-				feeDisplay = $"Preview failed: {preview.Message}";
-			}
-
-			_transferSummaryLabel.Text =
-				$"You are about to transfer {draft.Quantity} {draft.DisplaySymbol}\n" +
-				$"To: {draft.ToAddress}\n" +
-				$"Estimated fee: {feeDisplay}";
-		}
-		catch
+		string feeDisplay;
+		if (!result.IsSuccess)
 		{
-			_transferSummaryLabel.Text =
-				$"You are about to transfer {draft.Quantity} {draft.DisplaySymbol}\n" +
-				$"To: {draft.ToAddress}\n" +
-				$"Estimated fee: unavailable";
+			feeDisplay = result.ErrorKind == NetworkErrorKind.TransportError
+				? "unavailable (network error)"
+				: $"unavailable ({result.ErrorMessage})";
 		}
+		else if (!result.Data.WouldSucceed)
+		{
+			feeDisplay = $"Preview failed: {result.Data.Message}";
+		}
+		else
+		{
+			feeDisplay = decimal.TryParse(result.Data.EstimatedFee,
+				System.Globalization.NumberStyles.Any,
+				System.Globalization.CultureInfo.InvariantCulture,
+				out var feeAmount) && feeAmount > 0m
+				? $"{feeAmount:0.########} {result.Data.FeeToken}".Trim()
+				: "None";
+		}
+
+		_transferSummaryLabel.Text =
+			$"You are about to transfer {draft.Quantity} {draft.DisplaySymbol}\n" +
+			$"To: {draft.ToAddress}\n" +
+			$"Estimated fee: {feeDisplay}";
 	}
 
 	private async void OnTransferDialogConfirmed()
@@ -572,17 +565,14 @@ public partial class GalaChainWallet : Control
 			return;
 		}
 
-		try
-		{
-			Log($"Submitting transfer of {draft.Quantity} {draft.DisplaySymbol}...");
-			await walletService.SubmitTransferAsync(draft);
-			RefreshUi();
+		Log($"Submitting transfer of {draft.Quantity} {draft.DisplaySymbol}...");
+		var result = await walletService.SubmitTransferAsync(draft);
+		RefreshUi();
+
+		if (result.IsSuccess)
 			Log("Transfer successful.");
-		}
-		catch (System.Exception ex)
-		{
-			Log($"Transfer failed: {ex.Message}");
-		}
+		else
+			Log($"Transfer failed: {result.ErrorMessage}");
 	}
 	
 	private bool TryBuildTransferDraft(out TransferDraft draft, out string error)

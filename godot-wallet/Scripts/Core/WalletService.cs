@@ -154,15 +154,19 @@ public class WalletService : IWalletService
 		return _state.Balances;
 	}
 	
-	public async Task RefreshBalancesAsync()
+	public async Task<NetworkResult<List<TokenBalanceModel>>> RefreshBalancesAsync()
 	{
 		if (!_state.HasWallet || !_state.IsUnlocked)
 		{
 			_state.Balances = new List<TokenBalanceModel>();
-			return;
+			return NetworkResult<List<TokenBalanceModel>>.Success(_state.Balances);
 		}
 
-		_state.Balances = await _galaChainClient.FetchBalancesAsync(_state.Address);
+		var result = await _galaChainClient.FetchBalancesAsync(_state.Address);
+		if (result.IsSuccess)
+			_state.Balances = result.Data;
+
+		return result;
 	}
 
 	public string ConsumePendingRecoveryPhrase()
@@ -246,27 +250,30 @@ public class WalletService : IWalletService
 		};
 	}
 	
-	public async Task<TransferPreviewResult> PreviewTransferAsync(TransferDraft draft)
+	public async Task<NetworkResult<TransferPreviewResult>> PreviewTransferAsync(TransferDraft draft)
 	{
 		if (!_state.HasWallet || !_state.IsUnlocked)
-			throw new InvalidOperationException("Wallet must be unlocked to preview transfer.");
+			return NetworkResult<TransferPreviewResult>.Rejected("Wallet must be unlocked to preview transfer.");
 
 		var request = BuildTransferRequest(draft);
 		return await _galaChainClient.DryRunTransferAsync(request);
 	}
 
-	public async Task SubmitTransferAsync(TransferDraft draft)
+	public async Task<NetworkResult<string>> SubmitTransferAsync(TransferDraft draft)
 	{
 		if (!_state.HasWallet || !_state.IsUnlocked)
-			throw new InvalidOperationException("Wallet must be unlocked to transfer.");
+			return NetworkResult<string>.Rejected("Wallet must be unlocked to transfer.");
 
 		if (string.IsNullOrWhiteSpace(_state.PrivateKey))
-			throw new InvalidOperationException("Private key is not available in memory.");
+			return NetworkResult<string>.Rejected("Private key is not available in memory.");
 
 		var request = BuildTransferRequest(draft);
-
 		_galaSigner.SignTransfer(request, _state.PrivateKey);
-		await _galaTransferClient.TransferAsync(request, ToGalaAlias(_state.Address));
-		await RefreshBalancesAsync();
+
+		var result = await _galaTransferClient.TransferAsync(request, ToGalaAlias(_state.Address));
+		if (result.IsSuccess)
+			await RefreshBalancesAsync();
+
+		return result;
 	}
 }

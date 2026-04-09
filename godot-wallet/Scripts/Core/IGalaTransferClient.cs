@@ -5,5 +5,5 @@ namespace GalaWallet.Core;
 
 public interface IGalaTransferClient
 {
-	Task<string> TransferAsync(GalaTransferTokenRequest request, string walletAlias);
+	Task<NetworkResult<string>> TransferAsync(GalaTransferTokenRequest request, string walletAlias);
 }

@@ -19,10 +19,10 @@ public class GalaChainClient : IGalaChainClient
 		_config = config ?? new GalaChainNetworkConfig();
 	}
 
-	public async Task<List<TokenBalanceModel>> FetchBalancesAsync(string ethAddress)
+	public async Task<NetworkResult<List<TokenBalanceModel>>> FetchBalancesAsync(string ethAddress)
 	{
 		if (string.IsNullOrWhiteSpace(ethAddress))
-			throw new InvalidOperationException("Cannot fetch balances without an address.");
+			return NetworkResult<List<TokenBalanceModel>>.Rejected("Cannot fetch balances without an address.");
 
 		string owner = BuildOwnerAlias(ethAddress);
 
@@ -32,128 +32,128 @@ public class GalaChainClient : IGalaChainClient
 		};
 
 		string json = JsonSerializer.Serialize(request);
-		using var content = new StringContent(json, Encoding.UTF8, "application/json");
-		using var response = await Http.PostAsync(_config.FetchBalancesUrl, content);
 
-		string responseText = await response.Content.ReadAsStringAsync();
-
-		if (!response.IsSuccessStatusCode)
+		try
 		{
-			throw new InvalidOperationException(
-				$"FetchBalances failed: {(int)response.StatusCode} {response.ReasonPhrase}. Body: {responseText}");
-		}
+			using var content = new StringContent(json, Encoding.UTF8, "application/json");
+			using var response = await Http.PostAsync(_config.FetchBalancesUrl, content);
 
-		var parsed = JsonSerializer.Deserialize<GalaFetchBalancesResponse>(
-			responseText,
-			new JsonSerializerOptions
+			string responseText = await response.Content.ReadAsStringAsync();
+
+			if (!response.IsSuccessStatusCode)
+				return NetworkResult<List<TokenBalanceModel>>.Rejected(responseText, (int)response.StatusCode);
+
+			var parsed = JsonSerializer.Deserialize<GalaFetchBalancesResponse>(
+				responseText,
+				new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+			if (parsed == null)
+				return NetworkResult<List<TokenBalanceModel>>.ParseError("FetchBalances response could not be parsed.");
+
+			var results = new List<TokenBalanceModel>();
+
+			foreach (var item in parsed.Data)
 			{
-				PropertyNameCaseInsensitive = true
-			});
+				decimal total = ParseDecimal(item.Quantity);
+				decimal locked = 0m;
 
-		if (parsed == null)
-			throw new InvalidOperationException("FetchBalances response could not be parsed.");
+				foreach (var hold in item.LockedHolds)
+				{
+					locked += ParseDecimal(hold.Quantity);
+				}
 
-		var results = new List<TokenBalanceModel>();
+				decimal available = total - locked;
+				if (available < 0m)
+					available = 0m;
 
-		foreach (var item in parsed.Data)
-		{
-			decimal total = ParseDecimal(item.Quantity);
-			decimal locked = 0m;
+				string symbol = BuildDisplaySymbol(item);
 
-			foreach (var hold in item.LockedHolds)
-			{
-				locked += ParseDecimal(hold.Quantity);
+				results.Add(new TokenBalanceModel
+				{
+					Symbol = symbol,
+					DisplayAmount = locked > 0m
+						? $"{available:0.########} available ({total:0.########} total)"
+						: $"{total:0.########}",
+
+					Collection = item.Collection,
+					Category = item.Category,
+					Type = item.Type,
+					AdditionalKey = item.AdditionalKey,
+					Instance = "0",
+					RawQuantity = item.Quantity,
+					AvailableAmount = available
+				});
 			}
 
-			decimal available = total - locked;
-			if (available < 0m)
-				available = 0m;
-
-			string symbol = BuildDisplaySymbol(item);
-
-			results.Add(new TokenBalanceModel
-			{
-				Symbol = symbol,
-				DisplayAmount = locked > 0m
-					? $"{available:0.########} available ({total:0.########} total)"
-					: $"{total:0.########}",
-
-				Collection = item.Collection,
-				Category = item.Category,
-				Type = item.Type,
-				AdditionalKey = item.AdditionalKey,
-				Instance = "0",
-				RawQuantity = item.Quantity,
-				AvailableAmount = available
-			});
+			return NetworkResult<List<TokenBalanceModel>>.Success(results);
 		}
-
-		return results;
+		catch (HttpRequestException ex)
+		{
+			return NetworkResult<List<TokenBalanceModel>>.TransportError(ex.Message);
+		}
 	}
 
-	public async Task<TransferPreviewResult> DryRunTransferAsync(GalaTransferTokenRequest signedRequest)
+	public async Task<NetworkResult<TransferPreviewResult>> DryRunTransferAsync(GalaTransferTokenRequest request)
 	{
 		var wrapper = new
 		{
 			method = "TransferToken",
-			signerAddress = signedRequest.from,
+			signerAddress = request.from,
 			dto = new
 			{
-				signedRequest.from,
-				signedRequest.to,
-				signedRequest.tokenInstance,
-				signedRequest.quantity,
-				uniqueKey = $"dryrun-{System.Guid.NewGuid()}",
-				signedRequest.dtoExpiresAt
+				request.from,
+				request.to,
+				request.tokenInstance,
+				request.quantity,
+				uniqueKey = $"dryrun-{Guid.NewGuid()}",
+				request.dtoExpiresAt
 			}
 		};
 
 		string json = JsonSerializer.Serialize(wrapper);
 
-		using var content = new StringContent(json, Encoding.UTF8, "application/json");
-		using var response = await Http.PostAsync(_config.DryRunUrl, content);
-
-		string responseText = await response.Content.ReadAsStringAsync();
-
-		if (!response.IsSuccessStatusCode)
+		try
 		{
-			return new TransferPreviewResult
+			using var content = new StringContent(json, Encoding.UTF8, "application/json");
+			using var response = await Http.PostAsync(_config.DryRunUrl, content);
+
+			string responseText = await response.Content.ReadAsStringAsync();
+
+			if (!response.IsSuccessStatusCode)
 			{
-				WouldSucceed = false,
-				Message = $"Dry run request failed: {(int)response.StatusCode} {response.ReasonPhrase}. {responseText}"
-			};
-		}
+				return NetworkResult<TransferPreviewResult>.Rejected(
+					$"{(int)response.StatusCode}: {responseText}", (int)response.StatusCode);
+			}
 
-		var parsed = JsonSerializer.Deserialize<GalaDryRunResponse>(
-			responseText,
-			new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+			var parsed = JsonSerializer.Deserialize<GalaDryRunResponse>(
+				responseText,
+				new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-		if (parsed == null)
-		{
-			return new TransferPreviewResult
+			if (parsed == null)
+				return NetworkResult<TransferPreviewResult>.ParseError("Could not parse dry run response.");
+
+			var inner = parsed.Data.Response;
+			bool success = parsed.Status == 1 && inner.Status == 1;
+			string fee = ExtractFeeFromWrites(parsed.Data.Writes, "TransferToken", request.from);
+
+			var preview = new TransferPreviewResult
 			{
-				WouldSucceed = false,
-				Message = "Could not parse dry run response."
+				WouldSucceed = success,
+				Message = success ? (inner.Message ?? "OK") : (inner.Message ?? parsed.Message),
+				EstimatedFee = fee,
+				FeeToken = "GALA"
 			};
+
+			return NetworkResult<TransferPreviewResult>.Success(preview);
 		}
-
-		var inner = parsed.Data.Response;
-		bool success = parsed.Status == 1 && inner.Status == 1;
-		string fee = ExtractFeeFromWrites(parsed.Data.Writes, "TransferToken", signedRequest.from);
-
-		return new TransferPreviewResult
+		catch (HttpRequestException ex)
 		{
-			WouldSucceed = success,
-			Message = success ? (inner.Message ?? "OK") : (inner.Message ?? parsed.Message),
-			EstimatedFee = fee,
-			FeeToken = "GALA"
-		};
+			return NetworkResult<TransferPreviewResult>.TransportError(ex.Message);
+		}
 	}
 
 	private static string ExtractFeeFromWrites(Dictionary<string, string> writes, string method, string userAddress)
 	{
-		// Fee record key pattern: \0GCFR\0{year}\0{month}\0{day}\0{method}\0{userAddress}\0{txId}\0
-		// Each GCFR entry has a "quantity" field with the fee for that transaction.
 		decimal totalFee = 0m;
 
 		foreach (var kvp in writes)
@@ -187,12 +187,9 @@ public class GalaChainClient : IGalaChainClient
 		string trimmed = ethAddress.Trim();
 
 		if (!trimmed.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-		{
-			throw new InvalidOperationException("Expected an Ethereum-style address beginning with 0x.");
-		}
+			return $"eth|{trimmed}";
 
-		string withoutPrefix = trimmed[2..];
-		return $"eth|{withoutPrefix}";
+		return $"eth|{trimmed[2..]}";
 	}
 
 	private static string BuildDisplaySymbol(GalaBalanceDto item)
@@ -207,7 +204,7 @@ public class GalaChainClient : IGalaChainClient
 
 		return $"{item.Collection}/{item.Category}/{item.Type}/{item.AdditionalKey}";
 	}
-	
+
 	private static decimal ParseDecimal(string value)
 	{
 		if (decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var result))

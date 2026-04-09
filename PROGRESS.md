@@ -110,6 +110,19 @@ Six fixes applied in one pass:
 - **Modified files**: `IWalletService.cs`, `WalletService.cs`, `GalaChainWallet.cs`
 - **To add a new operation later**: implement `ITransactionPolicy`, register it in `DtoPolicyRegistry`, and add the corresponding service/client methods.
 
+### Structured network response types
+- **Problem**: Blueprint (Section 15) calls for normalized network responses instead of raw exceptions. All three network operations (`FetchBalances`, `TransferToken`, `DryRun`) used `throw new InvalidOperationException(...)` for errors, forcing the UI to use try/catch with raw exception messages.
+- **Changes**:
+  - Added `NetworkResult<T>` generic result type with factory methods: `Success(data)`, `Rejected(message, statusCode)`, `TransportError(message)`, `ParseError(message)`.
+  - Added `NetworkErrorKind` enum: `Rejected`, `TransportError`, `ParseError`.
+  - Updated `IGalaChainClient` — `FetchBalancesAsync` returns `NetworkResult<List<TokenBalanceModel>>`, `DryRunTransferAsync` returns `NetworkResult<TransferPreviewResult>`.
+  - Updated `IGalaTransferClient` — `TransferAsync` returns `NetworkResult<string>`.
+  - Updated `GalaChainClient` and `GalaTransferClient` — all methods now catch `HttpRequestException` and return `TransportError`, return `Rejected` for non-success HTTP status codes, and return `ParseError` for unparseable responses. No more thrown exceptions for network failures.
+  - Updated `IWalletService`/`WalletService` — `RefreshBalancesAsync` returns `NetworkResult<List<TokenBalanceModel>>`, `PreviewTransferAsync` returns `NetworkResult<TransferPreviewResult>`, `SubmitTransferAsync` returns `NetworkResult<string>`.
+  - Updated `GalaChainWallet.cs` — all UI handlers now check `result.IsSuccess` and display `result.ErrorMessage` instead of catching exceptions. The dry-run preview distinguishes between transport errors and rejection errors in the fee display.
+- **New file**: `Scripts/Models/NetworkResult.cs`
+- **Modified files**: `IGalaChainClient.cs`, `GalaChainClient.cs`, `IGalaTransferClient.cs`, `GalaTransferClient.cs`, `IWalletService.cs`, `WalletService.cs`, `GalaChainWallet.cs`
+
 ---
 
 ## Known issues remaining
