@@ -4,7 +4,7 @@ Source: `testing-feedback-4-9-26.md`
 
 ---
 
-## 1. Demo should display user balance from the wallet — OPEN
+## 1. Demo should display user balance from the wallet — RESOLVED
 
 **Feedback**: The demo game should show the player's balance, not just the wallet address.
 
@@ -189,7 +189,7 @@ The `CreateWallet` and `ImportWallet` cases both call `await walletService.Refre
 
 ---
 
-## 11. Signals from wallet for demo to consume — OPEN
+## 11. Signals from wallet for demo to consume — RESOLVED
 
 **Feedback**: The demo should be able to react to wallet events (wallet created, unlocked, transfer completed, etc.) via Godot signals.
 
@@ -231,9 +231,9 @@ Proposed signals:
 | 4 | Display address as `eth\|...` | Small | Medium (consistency) | **Resolved** |
 | 5 | Move Refresh Balances button | Small | Medium (UX) | **Resolved** |
 | 2 | Hide To/Qty in game-initiated transfer | Small | Medium (UX) | **Resolved** |
-| 1 | Demo shows balance | Small | Medium (demo) | Open |
+| 1 | Demo shows balance | Small | Medium (demo) | **Resolved** |
 | 8 | Better recovery phrase dialog | Medium | Medium (UX) | **Resolved** |
-| 11 | Wallet signals for game events | Medium | Medium (integration) | Open |
+| 11 | Wallet signals for game events | Medium | Medium (integration) | **Resolved** |
 | 3 | Visual cleanup / theming | Medium | Medium (polish) | Open |
 | 6 | Token icons in balances | Large | Low (nice-to-have) | Open |
 | 7 | NFT minting in demo | Large | Low (new feature) | Deferred |

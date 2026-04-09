@@ -18,6 +18,29 @@ public class GalaTransferClient : IGalaTransferClient
 		_config = config ?? new GalaChainNetworkConfig();
 	}
 
+	public static NetworkResult<string> ParseTransferResponse(string responseBody)
+	{
+		GalaChainResponse? parsed;
+		try
+		{
+			parsed = JsonSerializer.Deserialize<GalaChainResponse>(
+				responseBody,
+				new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+		}
+		catch
+		{
+			return NetworkResult<string>.ParseError("Could not parse transfer response.");
+		}
+
+		if (parsed == null)
+			return NetworkResult<string>.ParseError("Could not parse transfer response.");
+
+		if (parsed.Status != 1)
+			return NetworkResult<string>.Rejected(parsed.Message);
+
+		return NetworkResult<string>.Success(responseBody);
+	}
+
 	public async Task<NetworkResult<string>> TransferAsync(GalaTransferTokenRequest request, string walletAlias)
 	{
 		string json = JsonSerializer.Serialize(request);
@@ -35,7 +58,7 @@ public class GalaTransferClient : IGalaTransferClient
 			if (!response.IsSuccessStatusCode)
 				return NetworkResult<string>.Rejected(body, (int)response.StatusCode);
 
-			return NetworkResult<string>.Success(body);
+			return ParseTransferResponse(body);
 		}
 		catch (TaskCanceledException)
 		{

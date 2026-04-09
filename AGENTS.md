@@ -79,6 +79,32 @@ Transfer validation lives in `TransferTokenPolicy`, not scattered in UI code. Th
 ### Dry-run for fee estimation
 The dry-run uses the GalaChain `/DryRun` endpoint. The request wraps the transfer DTO inside a `dto` property alongside `method` and `signerAddress` at the top level. No signature required. Fees are extracted from the `writes` dictionary by scanning for `GCFR` key entries.
 
+### Wallet events for game code
+Events originate on `GalaChainWallet` (the UI class, where actions happen) and are forwarded through `WalletFacade` for game code to consume. This keeps the dependency one-way: facade -> UI.
+
+**To add a new event:**
+1. Add `public event Action<...>? EventName;` to `GalaChainWallet.cs` (with the other events)
+2. Fire it at the right point in the UI code: `EventName?.Invoke(...);`
+3. Add the same event signature to `WalletFacade`
+4. Forward it in `WalletFacade.SubscribeToWalletEvents()`: `wallet.EventName += args => EventName?.Invoke(args);`
+
+**Current events:**
+| Event | Args | Fired when |
+|-------|------|-----------|
+| `WalletCreated` | `string address` | After wallet creation |
+| `WalletImported` | `string address` | After private key or mnemonic import |
+| `WalletUnlocked` | `string address` | After successful unlock |
+| `WalletLocked` | (none) | After manual lock or auto-lock |
+| `TransferCompleted` | `string to, string qty, string symbol` | After successful transfer submission |
+| `TransferFailed` | `string error` | After failed transfer |
+| `BalancesRefreshed` | (none) | After balances are updated (any trigger) |
+
+**Game code usage:**
+```csharp
+_wallet.BalancesRefreshed += () => { /* update game UI */ };
+_wallet.TransferCompleted += (to, qty, sym) => { /* grant item, etc. */ };
+```
+
 ### Idle timeout
 The wallet auto-locks after 5 minutes of inactivity (`IdleTimeoutSeconds = 300`). The idle timer resets on every user-initiated wallet action. `_Process` checks the timer each frame when the wallet is unlocked.
 

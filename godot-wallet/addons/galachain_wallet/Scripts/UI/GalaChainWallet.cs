@@ -55,6 +55,15 @@ public partial class GalaChainWallet : Control
 	private const double IdleTimeoutSeconds = 300.0; // 5 minutes
 	private double _lastActivityTime;
 
+	// Events — WalletFacade subscribes to these and re-exposes for game code
+	public event Action<string>? WalletCreated;
+	public event Action<string>? WalletImported;
+	public event Action<string>? WalletUnlocked;
+	public event Action? WalletLocked;
+	public event Action<string, string, string>? TransferCompleted;
+	public event Action<string>? TransferFailed;
+	public event Action? BalancesRefreshed;
+
 	public void Initialize(IWalletService walletService)
 	{
 		_walletService = walletService;
@@ -146,6 +155,7 @@ public partial class GalaChainWallet : Control
 			_walletService.Lock();
 			RefreshUi();
 			Log("Wallet auto-locked after inactivity.");
+			WalletLocked?.Invoke();
 		}
 	}
 

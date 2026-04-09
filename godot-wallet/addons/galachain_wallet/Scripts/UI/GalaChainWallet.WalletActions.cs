@@ -39,6 +39,7 @@ public partial class GalaChainWallet
 		walletService.Lock();
 		RefreshUi();
 		Log("Wallet locked.");
+		WalletLocked?.Invoke();
 	}
 
 	private void OnCopyAddressPressed()
@@ -113,6 +114,8 @@ public partial class GalaChainWallet
 					}
 
 					Log("Created wallet and saved encrypted wallet file.");
+					WalletCreated?.Invoke(walletService.GetAddress());
+					BalancesRefreshed?.Invoke();
 					break;
 
 				case PendingPasswordAction.ImportWallet:
@@ -121,6 +124,8 @@ public partial class GalaChainWallet
 					await walletService.RefreshBalancesAsync();
 					RefreshUi();
 					Log("Imported wallet and saved encrypted wallet file.");
+					WalletImported?.Invoke(walletService.GetAddress());
+					BalancesRefreshed?.Invoke();
 					break;
 
 				case PendingPasswordAction.UnlockWallet:
@@ -133,6 +138,8 @@ public partial class GalaChainWallet
 					Log(ok ? "Wallet unlocked." : "Unlock failed.");
 					if (ok)
 					{
+						WalletUnlocked?.Invoke(walletService.GetAddress());
+						BalancesRefreshed?.Invoke();
 						ConsumePendingTransfer();
 					}
 					break;
@@ -143,6 +150,8 @@ public partial class GalaChainWallet
 					await walletService.RefreshBalancesAsync();
 					RefreshUi();
 					Log("Imported wallet from recovery phrase and saved encrypted wallet file.");
+					WalletImported?.Invoke(walletService.GetAddress());
+					BalancesRefreshed?.Invoke();
 					break;
 
 				default:
@@ -202,9 +211,14 @@ public partial class GalaChainWallet
 		RefreshUi();
 
 		if (result.IsSuccess)
+		{
 			Log("Balances refreshed.");
+			BalancesRefreshed?.Invoke();
+		}
 		else
+		{
 			Log($"Balance refresh failed: {result.ErrorMessage}");
+		}
 	}
 
 	private void OpenPasswordDialog(PendingPasswordAction action, string prompt)

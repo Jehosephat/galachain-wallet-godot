@@ -213,9 +213,16 @@ public partial class GalaChainWallet
 		RefreshUi();
 
 		if (result.IsSuccess)
+		{
 			Log("Transfer successful.");
+			TransferCompleted?.Invoke(draft.ToAddress, draft.Quantity, draft.DisplaySymbol);
+			BalancesRefreshed?.Invoke();
+		}
 		else
+		{
 			Log($"Transfer failed: {result.ErrorMessage}");
+			TransferFailed?.Invoke(result.ErrorMessage);
+		}
 	}
 
 	private bool TryBuildTransferDraft(out TransferDraft draft, out string error)

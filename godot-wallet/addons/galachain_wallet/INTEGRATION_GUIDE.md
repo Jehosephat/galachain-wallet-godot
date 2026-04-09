@@ -147,6 +147,66 @@ _wallet.RequestTransfer(
 await _wallet.RefreshBalancesAsync();
 ```
 
+### Reading Balances
+
+```csharp
+var balances = _wallet.GetBalances();
+foreach (var b in balances)
+{
+    GD.Print($"{b.Symbol}: {b.AvailableAmount}");
+}
+```
+
+### Subscribing to Wallet Events
+
+The wallet fires C# events on `WalletFacade` that your game can subscribe to:
+
+```csharp
+_wallet.WalletCreated += (address) =>
+{
+    GD.Print($"Wallet created: {address}");
+};
+
+_wallet.WalletUnlocked += (address) =>
+{
+    GD.Print($"Wallet unlocked: {address}");
+};
+
+_wallet.WalletLocked += () =>
+{
+    GD.Print("Wallet locked");
+};
+
+_wallet.BalancesRefreshed += () =>
+{
+    // Update your game's balance display
+    var balances = _wallet.GetBalances();
+};
+
+_wallet.TransferCompleted += (to, quantity, symbol) =>
+{
+    GD.Print($"Sent {quantity} {symbol} to {to}");
+    // Grant item, update inventory, etc.
+};
+
+_wallet.TransferFailed += (error) =>
+{
+    GD.Print($"Transfer failed: {error}");
+};
+```
+
+**Available events:**
+
+| Event | Args | Fired when |
+|-------|------|-----------|
+| `WalletCreated` | `string address` | After wallet creation |
+| `WalletImported` | `string address` | After private key or mnemonic import |
+| `WalletUnlocked` | `string address` | After successful unlock |
+| `WalletLocked` | (none) | After manual lock or auto-lock timeout |
+| `TransferCompleted` | `string to, string qty, string symbol` | After successful transfer |
+| `TransferFailed` | `string error` | After failed transfer |
+| `BalancesRefreshed` | (none) | After balances are updated (any trigger) |
+
 ## Complete Example
 
 ```csharp
@@ -157,11 +217,13 @@ public partial class GameShop : Control
 {
     private WalletFacade _wallet = null!;
     private Control _walletMount = null!;
+    private Label _balanceLabel = null!;
 
     public override void _Ready()
     {
         _wallet = new WalletFacade();
         _walletMount = GetNode<Control>("%WalletMount");
+        _balanceLabel = GetNode<Label>("%BalanceLabel");
 
         GetNode<Button>("%OpenWalletButton").Pressed += () =>
         {
@@ -177,6 +239,22 @@ public partial class GameShop : Control
                 "GALA"
             );
         };
+
+        // React to wallet events
+        _wallet.BalancesRefreshed += UpdateBalanceDisplay;
+        _wallet.WalletLocked += () => _balanceLabel.Text = "";
+        _wallet.TransferCompleted += (to, qty, sym) =>
+        {
+            GD.Print($"Purchase complete: {qty} {sym}");
+            // Grant the sword to the player here
+        };
+    }
+
+    private void UpdateBalanceDisplay()
+    {
+        var balances = _wallet.GetBalances();
+        if (balances.Count > 0)
+            _balanceLabel.Text = $"GALA: {balances[0].AvailableAmount:0.##}";
     }
 }
 ```
@@ -244,6 +322,7 @@ var wallet = new WalletFacade(walletService);
 | `HasWallet()` | `bool` | Whether a wallet exists (created or imported). |
 | `IsUnlocked()` | `bool` | Whether the wallet is currently unlocked. |
 | `GetCurrentAddress()` | `string` | The wallet's 0x-prefixed Ethereum address. |
+| `GetBalances()` | `List<TokenBalanceModel>` | Returns the current in-memory balance list. |
 | `RefreshBalancesAsync()` | `Task` | Fetches latest balances from GalaChain. |
 | `RequestTransfer(to, quantity, symbol)` | `void` | Opens a pre-filled transfer dialog. Auto-prompts unlock if needed. |
 
