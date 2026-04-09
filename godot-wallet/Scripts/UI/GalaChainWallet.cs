@@ -47,6 +47,9 @@ public partial class GalaChainWallet : Control
 	private string? _pendingTransferQuantity;
 	private string? _pendingTransferSymbol;
 
+	private const double IdleTimeoutSeconds = 300.0; // 5 minutes
+	private double _lastActivityTime;
+
 	public void Initialize(IWalletService walletService)
 	{
 		_walletService = walletService;
@@ -100,6 +103,7 @@ public partial class GalaChainWallet : Control
 		_transferQuantityInput.TextChanged += OnTransferInputChanged;
 		
 		_uiReady = true;
+		_lastActivityTime = Time.GetTicksMsec() / 1000.0;
 
 		if (_walletService != null)
 		{
@@ -112,7 +116,26 @@ public partial class GalaChainWallet : Control
 			ShowUninitializedState();
 		}
 	}
-	
+
+	public override void _Process(double delta)
+	{
+		if (_walletService == null || !_walletService.IsUnlocked())
+			return;
+
+		double now = Time.GetTicksMsec() / 1000.0;
+		if (now - _lastActivityTime >= IdleTimeoutSeconds)
+		{
+			_walletService.Lock();
+			RefreshUi();
+			Log("Wallet auto-locked after inactivity.");
+		}
+	}
+
+	private void ResetIdleTimer()
+	{
+		_lastActivityTime = Time.GetTicksMsec() / 1000.0;
+	}
+
 	private void ShowUninitializedState()
 	{
 		_statusLabel.Text = "Status: Wallet not initialized";
@@ -190,6 +213,7 @@ public partial class GalaChainWallet : Control
 		}
 
 		DisplayServer.ClipboardSet(address);
+		ResetIdleTimer();
 		Log($"Copied address: {address}");
 	}
 	
@@ -301,6 +325,7 @@ public partial class GalaChainWallet : Control
 
 	private void OpenTransferDialog(TokenBalanceModel token, string toAddress, string quantity)
 	{
+		ResetIdleTimer();
 		_selectedTransferToken = token;
 
 		_transferSelectedTokenLabel.Text =
@@ -348,6 +373,8 @@ public partial class GalaChainWallet : Control
 			Log("Password entry was empty.");
 			return;
 		}
+
+		ResetIdleTimer();
 
 		try
 		{
@@ -452,6 +479,8 @@ public partial class GalaChainWallet : Control
 		
 		var walletService = _walletService!;
 		
+		ResetIdleTimer();
+
 		try
 		{
 			Log("Refreshing balances from GalaChain...");
@@ -533,6 +562,7 @@ public partial class GalaChainWallet : Control
 			return;
 		}
 
+		ResetIdleTimer();
 		var walletService = _walletService!;
 
 		if (!TryBuildTransferDraft(out var draft, out var error))

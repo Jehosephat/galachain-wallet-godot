@@ -85,14 +85,25 @@ Six fixes applied in one pass:
 
 **Build verified**: `dotnet build` succeeds with 0 errors (21 pre-existing nullable warnings).
 
+## 2026-04-09
+
+### Idle timeout / auto-lock
+- **Problem**: Blueprint (Section 10) requires the wallet to auto-lock after a configurable idle period to limit the window during which keys are in memory.
+- **Changes**:
+  - Added `IdleTimeoutSeconds` constant (300s / 5 minutes) and `_lastActivityTime` tracker to `GalaChainWallet`.
+  - Added `_Process` override that checks elapsed time since last activity; if the wallet is unlocked and idle time exceeds the threshold, it calls `Lock()`, refreshes the UI, and logs "Wallet auto-locked after inactivity."
+  - Added `ResetIdleTimer()` calls at all wallet action points: password dialog confirmation (covers create, import, unlock), balance refresh, copy address, transfer dialog open, and transfer dialog confirmation.
+  - Timer initializes on `_Ready` and resets on every user-initiated wallet action.
+- **File**: `Scripts/UI/GalaChainWallet.cs`
+
 ---
 
 ## Known issues remaining
 See `PROJECT-ANALYSIS.md` Section 5 for the full critical issues list. Key items still open:
-- Mnemonic-imported wallets cannot sign after unlock (private key not re-derived)
+- ~~Mnemonic-imported wallets cannot sign after unlock (private key not re-derived)~~ — Fixed
 - ~~No `dtoOperation` field on transfer requests~~ — **Deferred**: GalaChain's current Gateway API does not reliably support this field; operation routing is handled by endpoint URL. Revisit if GalaChain adds support.
 - ~~`GalaCanonicalJson` does not exclude `signature`/`trace` fields~~ — Fixed
 - No DTO policy registry / allowlist enforcement
-- No idle timeout / auto-lock
+- ~~No idle timeout / auto-lock~~ — Fixed (5-minute timeout)
 - No unit tests
 - ~~Interface/class file name swap (`GalaTransferClient.cs` ↔ `IGalaTransferClient.cs`)~~ — Fixed
