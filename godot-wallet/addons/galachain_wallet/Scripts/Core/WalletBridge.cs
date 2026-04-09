@@ -83,7 +83,8 @@ public partial class WalletBridge : Node
 				{ "category", b.Category },
 				{ "type", b.Type },
 				{ "additional_key", b.AdditionalKey },
-				{ "instance", b.Instance }
+				{ "instance", b.Instance },
+				{ "image_url", b.ImageUrl }
 			});
 		}
 		return result;

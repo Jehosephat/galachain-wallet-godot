@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 
 namespace GalaWallet.Models;
 
-// replace with FetchBalancesWithTokenMetadataResponse structure
 public class GalaBalanceDto
 {
 	[JsonPropertyName("collection")]
@@ -29,4 +28,25 @@ public class GalaLockedHoldDto
 {
 	[JsonPropertyName("quantity")]
 	public string Quantity { get; set; } = "0";
+}
+
+public class GalaTokenMetadata
+{
+	[JsonPropertyName("name")]
+	public string Name { get; set; } = "";
+
+	[JsonPropertyName("symbol")]
+	public string Symbol { get; set; } = "";
+
+	[JsonPropertyName("description")]
+	public string Description { get; set; } = "";
+
+	[JsonPropertyName("image")]
+	public string Image { get; set; } = "";
+
+	[JsonPropertyName("decimals")]
+	public int Decimals { get; set; }
+
+	[JsonPropertyName("isNonFungible")]
+	public bool IsNonFungible { get; set; }
 }

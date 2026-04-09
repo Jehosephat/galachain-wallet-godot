@@ -13,4 +13,5 @@ public class TokenBalanceModel
 
 	public string RawQuantity { get; set; } = "0";
 	public decimal AvailableAmount { get; set; }
+	public string ImageUrl { get; set; } = "";
 }

@@ -9,7 +9,7 @@ public class GalaChainNetworkConfig
 	public int ReadTimeoutSeconds { get; set; } = 15;
 	public int WriteTimeoutSeconds { get; set; } = 30;
 
-	public string FetchBalancesUrl => $"{ApiBaseUrl}/{Channel}/{Contract}/FetchBalances";
+	public string FetchBalancesUrl => $"{ApiBaseUrl}/{Channel}/{Contract}/FetchBalancesWithTokenMetadata";
 	public string TransferTokenUrl => $"{ApiBaseUrl}/{Channel}/{Contract}/TransferToken";
 	public string DryRunUrl => $"{ApiBaseUrl}/{Channel}/{Contract}/DryRun";
 }

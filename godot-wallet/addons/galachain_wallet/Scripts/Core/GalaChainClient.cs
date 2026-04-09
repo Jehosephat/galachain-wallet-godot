@@ -54,12 +54,15 @@ public class GalaChainClient : IGalaChainClient
 
 			var results = new List<TokenBalanceModel>();
 
-			foreach (var item in parsed.Data)
+			foreach (var entry in parsed.Data.Results)
 			{
-				decimal total = ParseDecimal(item.Quantity);
+				var bal = entry.Balance;
+				var meta = entry.Token;
+
+				decimal total = ParseDecimal(bal.Quantity);
 				decimal locked = 0m;
 
-				foreach (var hold in item.LockedHolds)
+				foreach (var hold in bal.LockedHolds)
 				{
 					locked += ParseDecimal(hold.Quantity);
 				}
@@ -68,7 +71,9 @@ public class GalaChainClient : IGalaChainClient
 				if (available < 0m)
 					available = 0m;
 
-				string symbol = BuildDisplaySymbol(item);
+				string symbol = !string.IsNullOrWhiteSpace(meta.Symbol)
+					? meta.Symbol
+					: BuildDisplaySymbol(bal);
 
 				results.Add(new TokenBalanceModel
 				{
@@ -77,13 +82,14 @@ public class GalaChainClient : IGalaChainClient
 						? $"{available:0.########} available ({total:0.########} total)"
 						: $"{total:0.########}",
 
-					Collection = item.Collection,
-					Category = item.Category,
-					Type = item.Type,
-					AdditionalKey = item.AdditionalKey,
+					Collection = bal.Collection,
+					Category = bal.Category,
+					Type = bal.Type,
+					AdditionalKey = bal.AdditionalKey,
 					Instance = "0",
-					RawQuantity = item.Quantity,
-					AvailableAmount = available
+					RawQuantity = bal.Quantity,
+					AvailableAmount = available,
+					ImageUrl = meta.Image
 				});
 			}
 

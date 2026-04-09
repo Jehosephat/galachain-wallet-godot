@@ -55,6 +55,9 @@ public partial class GalaChainWallet : Control
 	private const double IdleTimeoutSeconds = 300.0; // 5 minutes
 	private double _lastActivityTime;
 
+	private static readonly System.Net.Http.HttpClient IconHttp = new();
+	private static readonly System.Collections.Generic.Dictionary<string, Texture2D> IconCache = new();
+
 	// Events — WalletFacade subscribes to these and re-exposes for game code
 	public event Action<string>? WalletCreated;
 	public event Action<string>? WalletImported;
@@ -271,10 +274,66 @@ public partial class GalaChainWallet : Control
 			return;
 		}
 
-		foreach (var balance in balances)
+		for (int i = 0; i < balances.Count; i++)
 		{
+			var balance = balances[i];
 			_balancesList.AddItem($"{balance.Symbol}: {balance.DisplayAmount}");
+
+			if (!string.IsNullOrWhiteSpace(balance.ImageUrl))
+			{
+				LoadIconAsync(balance.ImageUrl, i);
+			}
 		}
+	}
+
+	private async void LoadIconAsync(string url, int itemIndex)
+	{
+		if (IconCache.TryGetValue(url, out var cached))
+		{
+			if (itemIndex >= 0 && itemIndex < _balancesList.ItemCount)
+				_balancesList.SetItemIcon(itemIndex, cached);
+			return;
+		}
+
+		// Retry up to 3 times — .NET HttpClient has intermittent TLS failures
+		// with some CDN domains in the Godot runtime
+		byte[]? data = null;
+		for (int attempt = 0; attempt < 3; attempt++)
+		{
+			try
+			{
+				data = await IconHttp.GetByteArrayAsync(url);
+				break;
+			}
+			catch
+			{
+				if (attempt < 2)
+					await System.Threading.Tasks.Task.Delay(500);
+			}
+		}
+
+		if (data == null || data.Length < 4)
+			return;
+
+		var image = new Image();
+		bool loaded = false;
+
+		if (data[0] == 0x89 && data[1] == 0x50)
+			loaded = image.LoadPngFromBuffer(data) == Error.Ok;
+		else if (data[0] == 0xFF && data[1] == 0xD8)
+			loaded = image.LoadJpgFromBuffer(data) == Error.Ok;
+		else if (data[0] == 0x52 && data[1] == 0x49)
+			loaded = image.LoadWebpFromBuffer(data) == Error.Ok;
+
+		if (!loaded)
+			return;
+
+		image.Resize(24, 24);
+		var texture = ImageTexture.CreateFromImage(image);
+		IconCache[url] = texture;
+
+		if (itemIndex >= 0 && itemIndex < _balancesList.ItemCount)
+			_balancesList.SetItemIcon(itemIndex, texture);
 	}
 
 	private void Log(string message)

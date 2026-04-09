@@ -88,7 +88,7 @@ Source: `testing-feedback-4-9-26.md`
 
 ---
 
-## 6. Balances could include token icon (use FetchBalancesWithTokenMetadata) — OPEN
+## 6. Balances could include token icon (use FetchBalancesWithTokenMetadata) — RESOLVED
 
 **Feedback**: Show token icons alongside balances. GalaChain has a `FetchBalancesWithTokenMetadata` endpoint that returns image URLs.
 
@@ -235,5 +235,5 @@ Proposed signals:
 | 8 | Better recovery phrase dialog | Medium | Medium (UX) | **Resolved** |
 | 11 | Wallet signals for game events | Medium | Medium (integration) | **Resolved** |
 | 3 | Visual cleanup / theming | Medium | Medium (polish) | Open |
-| 6 | Token icons in balances | Large | Low (nice-to-have) | Open |
+| 6 | Token icons in balances | Large | Low (nice-to-have) | **Resolved** |
 | 7 | NFT minting in demo | Large | Low (new feature) | Deferred |

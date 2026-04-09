@@ -205,6 +205,49 @@ Six fixes applied in one pass:
 
 - **Files**: `GalaChainWallet.cs`, `GalaChainWallet.WalletActions.cs`, `GalaChainWallet.Transfer.cs`, `GalaChainWallet.tscn`
 
+### Wallet events and demo balance display (feedback #1, #11)
+- **Problem**: Game code had no way to react to wallet lifecycle events. Demo didn't show balances.
+- **Changes**:
+  - Added 7 C# events to `GalaChainWallet` (UI): `WalletCreated`, `WalletImported`, `WalletUnlocked`, `WalletLocked`, `TransferCompleted`, `TransferFailed`, `BalancesRefreshed`.
+  - `WalletFacade` subscribes to UI events via `SubscribeToWalletEvents()` and re-exposes them for game code.
+  - Added `GetBalances()` to `WalletFacade`.
+  - Demo game subscribes to `BalancesRefreshed` and displays GALA balance in `GameBalanceLabel`.
+  - Pattern documented in `AGENTS.md` for adding future events.
+- **Files**: `GalaChainWallet.cs`, `GalaChainWallet.WalletActions.cs`, `GalaChainWallet.Transfer.cs`, `WalletFacade.cs`, `WalletDemoGame.cs`, `WalletDemoGame.tscn`, `AGENTS.md`, `INTEGRATION_GUIDE.md`
+
+### Transfer response validation
+- **Problem**: Transfer success was determined solely by HTTP status code. GalaChain can return HTTP 200 with `"Status": 0` (chain rejection) in the body.
+- **Changes**:
+  - Added `GalaChainResponse` model to parse the inner `Status` and `Message` fields.
+  - `GalaTransferClient` now parses the response body and returns `Rejected` if `Status != 1`.
+  - Extracted `ParseTransferResponse` as a static method for testability.
+  - Added 6 unit tests covering success, rejection, error payloads, invalid JSON, empty objects, and null bodies.
+- **Files**: `GalaTransferClient.cs`, `GalaChainResponse.cs` (new), `GalaTransferClientTests.cs` (new)
+- **Test count**: 32 total, all passing.
+
+### GDScript compatibility
+- **Problem**: Plugin was C#-only. GDScript games couldn't use it.
+- **Changes**:
+  - Added `WalletBridge.cs` — Godot `Node` wrapper that exposes `WalletFacade` methods via GDScript-compatible types (Godot signals, `Array<Dictionary>` returns).
+  - Updated `WalletPlugin.cs` to register `WalletBridge` as a `Wallet` autoload singleton on plugin enable.
+  - Created `setup.sh` and `setup.ps1` scripts to automate NuGet dependency setup.
+  - Added GDScript integration section to `INTEGRATION_GUIDE.md` with setup steps, examples, API reference, and troubleshooting.
+  - Created `GDSCRIPT-COMPATIBILITY.md` with implementation notes.
+- **New files**: `WalletBridge.cs`, `setup.sh`, `setup.ps1`
+
+### Token icons in balance list (feedback #6)
+- **Problem**: Balance list showed only text. No visual token identification.
+- **Changes**:
+  - Switched from `FetchBalances` to `FetchBalancesWithTokenMetadata` endpoint. Same request body, but response now includes token metadata (name, symbol, image URL, decimals).
+  - Updated `GalaFetchBalancesResponse` to handle the `{ results: [{ balance, token }] }` paginated structure.
+  - Added `GalaTokenMetadata` model (name, symbol, description, image, decimals, isNonFungible).
+  - Added `ImageUrl` to `TokenBalanceModel`. Symbol now sourced from `token.symbol` metadata.
+  - Balance list downloads token icons asynchronously via `HttpClient` with magic-byte format detection (PNG, JPG, WebP). Icons resized to 24x24 and cached in a static dictionary.
+  - Retry logic (3 attempts, 500ms backoff) to handle intermittent TLS failures with some CDN domains in the Godot/.NET runtime.
+  - Updated `WalletBridge` to include `image_url` in the GDScript balance dictionary.
+- **Files**: `GalaFetchBalancesResponse.cs`, `GalaBalanceDto.cs`, `GalaChainNetworkConfig.cs`, `TokenBalanceModel.cs`, `GalaChainClient.cs`, `GalaChainWallet.cs`, `WalletBridge.cs`
+- **Known issue**: .NET `HttpClient` has intermittent TLS handshake failures with `tokens.gala.games` and `static.gala.games` CDNs in the Godot runtime. Retries mitigate this but some icons may still fail to load on a given run. A future fix would be to use Godot's native `HttpRequest` node for icon downloads if the TLS issue can be resolved there.
+
 ---
 
 ## Known issues remaining
