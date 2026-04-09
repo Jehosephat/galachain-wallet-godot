@@ -1,6 +1,6 @@
 # GalaChain Wallet Plugin — Integration Guide
 
-This guide walks you through adding the GalaChain Wallet plugin to your Godot 4.x C# game.
+This guide walks you through adding the GalaChain Wallet plugin to your Godot 4.x game. The plugin works with both **C#** and **GDScript** games.
 
 ## What This Plugin Does
 
@@ -335,6 +335,107 @@ var wallet = new WalletFacade(walletService);
 | `Contract` | `token-contract` | Contract name |
 | `ReadTimeoutSeconds` | `15` | Timeout for balance/dry-run requests |
 | `WriteTimeoutSeconds` | `30` | Timeout for transfer submission |
+
+---
+
+## GDScript Integration
+
+The plugin includes a `WalletBridge` node that exposes all wallet functionality through Godot signals and GDScript-compatible types. When the plugin is enabled, a `Wallet` autoload singleton is registered automatically.
+
+### Quick Setup
+
+1. Copy `addons/galachain_wallet/` into your project
+2. From your project root, run the setup script:
+   - **Windows**: `powershell -File addons/galachain_wallet/setup.ps1`
+   - **macOS/Linux**: `bash addons/galachain_wallet/setup.sh`
+3. Open Godot, build the C# project (**Build > Build Project**)
+4. Enable the plugin: **Project > Project Settings > Plugins > GalaChain Wallet**
+5. The `Wallet` singleton is now available globally in GDScript
+
+### Scene Setup
+
+Add a `Control` node to your scene for the wallet UI to mount to:
+
+```
+MyGame (Node2D or Control)
+  └── WalletMount (Control)   <-- set anchors/size for where wallet appears
+```
+
+Set `WalletMount`'s Mouse Filter to **Ignore** so it doesn't block clicks on your game UI.
+
+### GDScript Example
+
+```gdscript
+extends Control
+
+@onready var wallet_mount = $WalletMount
+@onready var balance_label = $BalanceLabel
+
+func _ready():
+    Wallet.WalletUnlocked.connect(_on_wallet_unlocked)
+    Wallet.WalletLocked.connect(_on_wallet_locked)
+    Wallet.BalancesRefreshed.connect(_on_balances_refreshed)
+    Wallet.TransferCompleted.connect(_on_transfer_completed)
+
+func _on_open_wallet_pressed():
+    Wallet.OpenWallet(wallet_mount)
+
+func _on_buy_item_pressed():
+    Wallet.OpenWallet(wallet_mount)
+    Wallet.RequestTransfer("client|YOUR_GAME_WALLET", "100", "GALA")
+
+func _on_wallet_unlocked(address: String):
+    print("Unlocked: ", address)
+
+func _on_wallet_locked():
+    balance_label.text = ""
+
+func _on_balances_refreshed():
+    balance_label.text = "GALA: " + Wallet.GetGalaBalance()
+
+func _on_transfer_completed(to: String, quantity: String, symbol: String):
+    print("Sent %s %s to %s" % [quantity, symbol, to])
+```
+
+### GDScript API Reference
+
+**Methods** (on the `Wallet` autoload):
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `OpenWallet(parent: Control)` | `void` | Shows the wallet UI |
+| `CloseWallet()` | `void` | Hides the wallet UI |
+| `HasWallet()` | `bool` | Whether a wallet exists |
+| `IsUnlocked()` | `bool` | Whether the wallet is unlocked |
+| `GetCurrentAddress()` | `String` | The wallet's `eth\|` address |
+| `RequestTransfer(to, qty, symbol)` | `void` | Opens pre-filled transfer dialog |
+| `GetBalances()` | `Array[Dictionary]` | All token balances |
+| `GetGalaBalance()` | `String` | GALA balance as a formatted string |
+
+**Signals** (on the `Wallet` autoload):
+
+| Signal | Args | Fired when |
+|--------|------|-----------|
+| `WalletCreated` | `address: String` | After wallet creation |
+| `WalletImported` | `address: String` | After import (key or mnemonic) |
+| `WalletUnlocked` | `address: String` | After successful unlock |
+| `WalletLocked` | (none) | After lock or auto-lock |
+| `TransferCompleted` | `to: String, qty: String, symbol: String` | After successful transfer |
+| `TransferFailed` | `error: String` | After failed transfer |
+| `BalancesRefreshed` | (none) | After balances update |
+
+**Balance Dictionary** (returned by `GetBalances()`):
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `symbol` | `String` | Token display name (e.g., "GALA") |
+| `display_amount` | `String` | Formatted amount with lock info |
+| `available_amount` | `float` | Available balance as a number |
+| `collection` | `String` | GalaChain token collection |
+| `category` | `String` | Token category |
+| `type` | `String` | Token type |
+| `additional_key` | `String` | Additional key |
+| `instance` | `String` | Token instance ID |
 
 ## Troubleshooting
 
