@@ -118,8 +118,18 @@ public class WalletService : IWalletService
 			_state.HasWallet = true;
 			_state.IsUnlocked = true;
 			_state.Address = record.Address;
-			_state.Mnemonic = payload.SecretType == WalletSecretType.Mnemonic ? payload.Secret : "";
-			_state.PrivateKey = payload.SecretType == WalletSecretType.PrivateKey ? payload.Secret : "";
+
+			if (payload.SecretType == WalletSecretType.Mnemonic)
+			{
+				_state.Mnemonic = payload.Secret;
+				var wallet = new Wallet(payload.Secret, "");
+				_state.PrivateKey = NormalizePrivateKey(wallet.GetAccount(0).PrivateKey);
+			}
+			else
+			{
+				_state.Mnemonic = "";
+				_state.PrivateKey = payload.Secret;
+			}
 
 			return true;
 		}

@@ -33,6 +33,11 @@ This document tracks changes made after the initial MVP implementation (commit `
 - **Change**: `dtoExpiresAt` is now set to `DateTimeOffset.UtcNow.AddMinutes(3).ToUnixTimeMilliseconds()` — a 3-minute window, within the blueprint's recommended 2–5 minute range.
 - **File**: `WalletService.cs:BuildTransferRequest()`
 
+### Bug fix: Mnemonic wallets unable to sign after unlock
+- **Problem**: When unlocking a mnemonic-type wallet, `Unlock()` set `_state.PrivateKey = ""` because the decrypted secret was the mnemonic, not the private key. The wallet appeared unlocked but `SubmitTransferAsync` would throw "Private key is not available in memory."
+- **Change**: When the decrypted secret type is `Mnemonic`, the private key is now re-derived using `Nethereum.HdWallet.Wallet` at derivation path `m/44'/60'/0'/0/0` — the same path used during `ImportMnemonic` and `CreateWallet`.
+- **File**: `Scripts/Core/WalletService.cs:Unlock()`
+
 ### Bug fix: NullReferenceException in `GalaChainWallet._Ready()`
 - **Problem**: `_walletService.LoadWalletMetadataIfPresent()` was called at line 99 before the null check at line 102. If `Initialize()` hadn't been called before `_Ready()` (depends on Godot scene loading order), this would throw a `NullReferenceException`.
 - **Change**: Moved `LoadWalletMetadataIfPresent()` inside the existing `_walletService != null` guard.
