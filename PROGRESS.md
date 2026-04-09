@@ -159,6 +159,15 @@ Six fixes applied in one pass:
   - Added `<Compile Remove="Tests/**" />` to `Godot-Wallet.csproj` so the Godot build doesn't pick up test project files.
 - **Files**: `Scripts/UI/GalaChainWallet.cs` (rewritten), `Scripts/UI/GalaChainWallet.WalletActions.cs` (new), `Scripts/UI/GalaChainWallet.Transfer.cs` (new), `Godot-Wallet.csproj`
 
+### HTTP timeout configuration
+- **Problem**: `HttpClient` used the .NET default of 100 seconds. Slow/unreachable servers would leave the UI showing "loading..." for nearly 2 minutes before failing.
+- **Changes**:
+  - Added `ReadTimeoutSeconds` (default 15) and `WriteTimeoutSeconds` (default 30) to `GalaChainNetworkConfig`.
+  - `GalaChainClient`: `FetchBalancesAsync` and `DryRunTransferAsync` use the read timeout via `CancellationTokenSource`.
+  - `GalaTransferClient`: `TransferAsync` uses the write timeout.
+  - `TaskCanceledException` is caught and returned as `NetworkResult.TransportError` with a descriptive timeout message.
+- **Files**: `GalaChainNetworkConfig.cs`, `GalaChainClient.cs`, `GalaTransferClient.cs`
+
 ---
 
 ## Known issues remaining

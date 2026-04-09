@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using GalaWallet.Models;
 
@@ -35,10 +36,11 @@ public class GalaChainClient : IGalaChainClient
 
 		try
 		{
+			using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_config.ReadTimeoutSeconds));
 			using var content = new StringContent(json, Encoding.UTF8, "application/json");
-			using var response = await Http.PostAsync(_config.FetchBalancesUrl, content);
+			using var response = await Http.PostAsync(_config.FetchBalancesUrl, content, cts.Token);
 
-			string responseText = await response.Content.ReadAsStringAsync();
+			string responseText = await response.Content.ReadAsStringAsync(cts.Token);
 
 			if (!response.IsSuccessStatusCode)
 				return NetworkResult<List<TokenBalanceModel>>.Rejected(responseText, (int)response.StatusCode);
@@ -87,6 +89,10 @@ public class GalaChainClient : IGalaChainClient
 
 			return NetworkResult<List<TokenBalanceModel>>.Success(results);
 		}
+		catch (TaskCanceledException)
+		{
+			return NetworkResult<List<TokenBalanceModel>>.TransportError($"Request timed out after {_config.ReadTimeoutSeconds}s.");
+		}
 		catch (HttpRequestException ex)
 		{
 			return NetworkResult<List<TokenBalanceModel>>.TransportError(ex.Message);
@@ -114,10 +120,11 @@ public class GalaChainClient : IGalaChainClient
 
 		try
 		{
+			using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_config.ReadTimeoutSeconds));
 			using var content = new StringContent(json, Encoding.UTF8, "application/json");
-			using var response = await Http.PostAsync(_config.DryRunUrl, content);
+			using var response = await Http.PostAsync(_config.DryRunUrl, content, cts.Token);
 
-			string responseText = await response.Content.ReadAsStringAsync();
+			string responseText = await response.Content.ReadAsStringAsync(cts.Token);
 
 			if (!response.IsSuccessStatusCode)
 			{
@@ -145,6 +152,10 @@ public class GalaChainClient : IGalaChainClient
 			};
 
 			return NetworkResult<TransferPreviewResult>.Success(preview);
+		}
+		catch (TaskCanceledException)
+		{
+			return NetworkResult<TransferPreviewResult>.TransportError($"Request timed out after {_config.ReadTimeoutSeconds}s.");
 		}
 		catch (HttpRequestException ex)
 		{
