@@ -38,7 +38,7 @@ public partial class GalaChainWallet
 			return;
 		}
 
-		OpenTransferDialog(balances[selectedIndex], "", "");
+		OpenTransferDialog(balances[selectedIndex], "", "", readOnly: false);
 	}
 
 	public void RequestTransfer(string toAddress, string quantity, string tokenSymbol)
@@ -92,7 +92,7 @@ public partial class GalaChainWallet
 			return;
 		}
 
-		OpenTransferDialog(match, toAddress, quantity);
+		OpenTransferDialog(match, toAddress, quantity, readOnly: true);
 	}
 
 	private void ConsumePendingTransfer()
@@ -113,7 +113,7 @@ public partial class GalaChainWallet
 		ExecuteTransferRequest(to, quantity, symbol);
 	}
 
-	private void OpenTransferDialog(TokenBalanceModel token, string toAddress, string quantity)
+	private void OpenTransferDialog(TokenBalanceModel token, string toAddress, string quantity, bool readOnly)
 	{
 		ResetIdleTimer();
 		_selectedTransferToken = token;
@@ -123,10 +123,15 @@ public partial class GalaChainWallet
 
 		_transferToInput.Text = toAddress;
 		_transferQuantityInput.Text = quantity;
+
+		_transferToLabel.Visible = !readOnly;
+		_transferToInput.Visible = !readOnly;
+		_transferQuantityLabel.Visible = !readOnly;
+		_transferQuantityInput.Visible = !readOnly;
+
 		UpdateTransferSummary();
 
 		_transferDialog.PopupCentered(new Vector2I(520, 240));
-		_transferToInput.GrabFocus();
 	}
 
 	private void OnTransferInputChanged(string _newText)

@@ -76,11 +76,6 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Copy Address"
 
-[node name="RefreshBalancesButton" type="Button" parent="MarginContainer/VBoxContainer/WalletInfo/VBoxContainer/ButtonsRow" unique_id=1056145538]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Refresh Balances"
-
 [node name="ActionsPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer" unique_id=1252338106]
 layout_mode = 2
 
@@ -129,9 +124,18 @@ size_flags_vertical = 3
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/BalancesPanel" unique_id=1022992210]
 layout_mode = 2
 
-[node name="BalancesSectionLabel" type="Label" parent="MarginContainer/VBoxContainer/BalancesPanel/VBoxContainer" unique_id=378614182]
+[node name="BalancesHeaderRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/BalancesPanel/VBoxContainer"]
 layout_mode = 2
+
+[node name="BalancesSectionLabel" type="Label" parent="MarginContainer/VBoxContainer/BalancesPanel/VBoxContainer/BalancesHeaderRow" unique_id=378614182]
+layout_mode = 2
+size_flags_horizontal = 3
 text = "Balances"
+
+[node name="RefreshBalancesButton" type="Button" parent="MarginContainer/VBoxContainer/BalancesPanel/VBoxContainer/BalancesHeaderRow" unique_id=1056145538]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Refresh"
 
 [node name="BalancesList" type="ItemList" parent="MarginContainer/VBoxContainer/BalancesPanel/VBoxContainer" unique_id=79948741]
 unique_name_in_owner = true

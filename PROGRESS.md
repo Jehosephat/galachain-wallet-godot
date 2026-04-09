@@ -191,6 +191,20 @@ Six fixes applied in one pass:
 - **Removed**: `ClipboardService.cs` (empty stub, unused), `WalletAddressModel.cs` (empty stub, unused), their `.uid` files, and the now-empty `Scripts/Services/` directory. `BuildStatusText()` was already removed in #16.
 - **Updated**: `AGENTS.md` — removed `GalaWallet.Services` namespace entry.
 
+### Testing feedback — low-hanging fruit batch (items #10, #9, #4, #5, #2)
+
+1. **#10 — Balance refresh on mnemonic import** (bug fix): Added missing `await walletService.RefreshBalancesAsync()` in the `ImportMnemonic` case of `OnPasswordDialogConfirmed`. Balances now load immediately after importing a recovery phrase, matching the behavior of Create and Import Private Key.
+
+2. **#9 — Enter key confirms dialogs**: Connected `TextSubmitted` signal on `_passwordInput`, `_importPrivateKeyInput`, `_importMnemonicInput`, and `_transferQuantityInput` to hide the dialog and call the corresponding confirmed handler. Pressing Enter while typing in any dialog input now confirms it.
+
+3. **#4 — Display address as `eth|...`**: Added `FormatAsGalaAddress()` helper that converts `0x`-prefixed addresses to `eth|` format. Applied in `RefreshUi()` for the address display label and in `OnCopyAddressPressed()` for clipboard copy. Internal representation stays `0x` (Nethereum-native).
+
+4. **#5 — Refresh Balances button near balances list**: Moved `RefreshBalancesButton` from the Wallet Info `ButtonsRow` to a new `BalancesHeaderRow` HBox inside `BalancesPanel`, alongside the "Balances" label. Button text shortened to "Refresh".
+
+5. **#2 — Hide To/Quantity in game-initiated transfers**: Added `readOnly` parameter to `OpenTransferDialog`. When `true` (called via `RequestTransfer` from game code), the To label/input and Quantity label/input are hidden — the user only sees the summary and fee. When `false` (manual Transfer button), fields are visible and editable as before.
+
+- **Files**: `GalaChainWallet.cs`, `GalaChainWallet.WalletActions.cs`, `GalaChainWallet.Transfer.cs`, `GalaChainWallet.tscn`
+
 ---
 
 ## Known issues remaining

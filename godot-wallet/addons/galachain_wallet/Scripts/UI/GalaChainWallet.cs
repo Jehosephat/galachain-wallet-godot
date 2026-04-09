@@ -33,7 +33,9 @@ public partial class GalaChainWallet : Control
 	private Button _transferButton = null!;
 	private ConfirmationDialog _transferDialog = null!;
 	private Label _transferSelectedTokenLabel = null!;
+	private Label _transferToLabel = null!;
 	private LineEdit _transferToInput = null!;
+	private Label _transferQuantityLabel = null!;
 	private LineEdit _transferQuantityInput = null!;
 	private Label _transferSummaryLabel = null!;
 	private TokenBalanceModel? _selectedTransferToken;
@@ -83,7 +85,9 @@ public partial class GalaChainWallet : Control
 		_transferButton = GetNode<Button>("%TransferButton");
 		_transferDialog = GetNode<ConfirmationDialog>("%TransferDialog");
 		_transferSelectedTokenLabel = GetNode<Label>("%TransferSelectedTokenLabel");
+		_transferToLabel = GetNode<Label>("%TransferToLabel");
 		_transferToInput = GetNode<LineEdit>("%TransferToInput");
+		_transferQuantityLabel = GetNode<Label>("%TransferQuantityLabel");
 		_transferQuantityInput = GetNode<LineEdit>("%TransferQuantityInput");
 		_transferSummaryLabel = GetNode<Label>("%TransferSummaryLabel");
 
@@ -101,6 +105,11 @@ public partial class GalaChainWallet : Control
 		_transferDialog.Confirmed += OnTransferDialogConfirmed;
 		_transferToInput.TextChanged += OnTransferInputChanged;
 		_transferQuantityInput.TextChanged += OnTransferInputChanged;
+
+		_passwordInput.TextSubmitted += _ => { _passwordDialog.Hide(); OnPasswordDialogConfirmed(); };
+		_importPrivateKeyInput.TextSubmitted += _ => { _importPrivateKeyDialog.Hide(); OnImportPrivateKeyConfirmed(); };
+		_importMnemonicInput.TextSubmitted += _ => { _importMnemonicDialog.Hide(); OnImportMnemonicConfirmed(); };
+		_transferQuantityInput.TextSubmitted += _ => { _transferDialog.Hide(); OnTransferDialogConfirmed(); };
 
 		_uiReady = true;
 		_lastActivityTime = Time.GetTicksMsec() / 1000.0;
@@ -189,7 +198,7 @@ public partial class GalaChainWallet : Control
 				? "Status: Wallet unlocked"
 				: "Status: Wallet locked";
 
-			_addressValueLabel.Text = _walletService.GetAddress();
+			_addressValueLabel.Text = FormatAsGalaAddress(_walletService.GetAddress());
 		}
 		else
 		{
@@ -252,5 +261,16 @@ public partial class GalaChainWallet : Control
 	private void Log(string message)
 	{
 		_logOutput.AppendText($"{message}\n");
+	}
+
+	private static string FormatAsGalaAddress(string address)
+	{
+		if (string.IsNullOrWhiteSpace(address))
+			return address;
+
+		if (address.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+			return $"eth|{address[2..]}";
+
+		return address;
 	}
 }

@@ -48,7 +48,7 @@ public partial class GalaChainWallet
 			return;
 		}
 
-		string address = _walletService!.GetAddress();
+		string address = FormatAsGalaAddress(_walletService!.GetAddress());
 		if (string.IsNullOrWhiteSpace(address))
 		{
 			Log("No address to copy.");
@@ -146,6 +146,7 @@ public partial class GalaChainWallet
 				case PendingPasswordAction.ImportMnemonic:
 					walletService.ImportMnemonic(_pendingMnemonic, password);
 					_pendingMnemonic = "";
+					await walletService.RefreshBalancesAsync();
 					RefreshUi();
 					Log("Imported wallet from recovery phrase and saved encrypted wallet file.");
 					break;
