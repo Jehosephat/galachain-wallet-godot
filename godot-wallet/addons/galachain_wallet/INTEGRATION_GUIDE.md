@@ -342,15 +342,35 @@ var wallet = new WalletFacade(walletService);
 
 The plugin includes a `WalletBridge` node that exposes all wallet functionality through Godot signals and GDScript-compatible types. When the plugin is enabled, a `Wallet` autoload singleton is registered automatically.
 
-### Quick Setup
+### Step 1: Enable C# in Your Godot Project
 
-1. Copy `addons/galachain_wallet/` into your project
-2. From your project root, run the setup script:
+If your project is GDScript-only, you need to enable C# support first. The wallet plugin uses .NET crypto libraries that require the C# build pipeline — but your game code stays 100% GDScript.
+
+1. Make sure you have the **.NET version of Godot** (not the standard version). Download it from [godotengine.org](https://godotengine.org/download) — it's labeled "Godot Engine - .NET". If you've been using the standard version, you can switch safely — the .NET editor opens existing GDScript projects without any changes to your scenes, scripts, or project settings. It's the same editor with added C# support.
+2. Make sure the **.NET 8.0 SDK** (or later) is installed. Download from [dotnet.microsoft.com](https://dotnet.microsoft.com/download)
+3. Open your project in the .NET version of Godot
+4. Create a C# solution: **Project > Tools > C# > Create C# Solution**. This generates a `.csproj` and `.sln` file in your project root. You won't need to edit these files directly.
+5. Build once: **MSBuild > Build > Build Project** (or the build button in the top-right toolbar). This verifies the C# pipeline works.
+
+After this, you never need to write C# — the wallet plugin's C# code compiles automatically as part of your project.
+
+### Step 2: Install the Plugin
+
+1. Copy the `addons/galachain_wallet/` folder into your project's `addons/` directory
+2. From your project root (where `project.godot` lives), run the setup script:
    - **Windows**: `powershell -File addons/galachain_wallet/setup.ps1`
    - **macOS/Linux**: `bash addons/galachain_wallet/setup.sh`
-3. Open Godot, build the C# project (**Build > Build Project**)
+
+   This adds the required NuGet packages (Nethereum crypto libraries) to your `.csproj` and runs `dotnet restore`. If you prefer to do it manually, add these to your `.csproj`:
+   ```xml
+   <PackageReference Include="Nethereum.Accounts" Version="5.8.0" />
+   <PackageReference Include="Nethereum.HDWallet" Version="5.8.0" />
+   <PackageReference Include="Nethereum.Signer" Version="5.8.0" />
+   ```
+
+3. Back in Godot, build the C# project again (**Build > Build Project**)
 4. Enable the plugin: **Project > Project Settings > Plugins > GalaChain Wallet**
-5. The `Wallet` singleton is now available globally in GDScript
+5. The `Wallet` autoload singleton is now available globally in GDScript
 
 ### Scene Setup
 
@@ -438,6 +458,17 @@ func _on_transfer_completed(to: String, quantity: String, symbol: String):
 | `instance` | `String` | Token instance ID |
 
 ## Troubleshooting
+
+**"Unable to load addon script from path: WalletPlugin.cs"** — Godot cannot find the compiled C# assemblies when it tries to enable the plugin. This usually means the C# project was not built before the plugin was activated, or the build output isn't where Godot expects it. To fix:
+
+1. Disable the plugin in **Project > Project Settings > Plugins** (it may have auto-disabled itself already).
+2. Ensure you have a `.csproj` file in your project root. If not, create the C# solution first: **Project > Tools > C# > Create C# Solution**.
+3. Add the required NuGet packages if you haven't already (see Step 2 above), then run `dotnet restore`.
+4. Build inside the Godot editor: click **Build > Build Project** (or the hammer icon in the top-right toolbar). A command-line `dotnet build` puts output in a different location than Godot expects — always build from the editor.
+5. Restart the Godot editor (close and reopen the project). This forces a fresh load of the compiled assemblies.
+6. Now enable the plugin: **Project > Project Settings > Plugins > GalaChain Wallet > Active**.
+
+The key insight is that the build must happen *before* enabling the plugin, and building from within the Godot editor ensures the DLL lands in `.godot/mono/temp/bin/Debug/` where the editor looks for it.
 
 **"Wallet service is not initialized"** — `WalletFacade` was not created before calling wallet methods. Make sure you create it in `_Ready()`.
 
