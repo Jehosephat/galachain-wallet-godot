@@ -599,55 +599,6 @@ public partial class GalaChainWallet : Control
 		string toAddress = _transferToInput.Text.Trim();
 		string quantityText = _transferQuantityInput.Text.Trim();
 
-		if (string.IsNullOrWhiteSpace(toAddress))
-		{
-			error = "Recipient address is required.";
-			return false;
-		}
-
-		if (!toAddress.StartsWith("eth|", StringComparison.OrdinalIgnoreCase))
-		{
-			if(!toAddress.StartsWith("client|", StringComparison.OrdinalIgnoreCase))
-			{
-				error = "Recipient address must start with eth| or client|.";
-				return false;
-			}
-		}
-
-		if (string.Equals(toAddress, _walletService.GetAddress(), StringComparison.OrdinalIgnoreCase))
-		{
-			error = "Cannot transfer to the same wallet address.";
-			return false;
-		}
-
-		if (string.IsNullOrWhiteSpace(quantityText))
-		{
-			error = "Quantity is required.";
-			return false;
-		}
-
-		if (!decimal.TryParse(
-				quantityText,
-				System.Globalization.NumberStyles.Any,
-				System.Globalization.CultureInfo.InvariantCulture,
-				out var quantity))
-		{
-			error = "Quantity must be a valid number.";
-			return false;
-		}
-
-		if (quantity <= 0m)
-		{
-			error = "Quantity must be greater than zero.";
-			return false;
-		}
-
-		if (quantity > _selectedTransferToken.AvailableAmount)
-		{
-			error = "Quantity exceeds available balance.";
-			return false;
-		}
-
 		draft = new TransferDraft
 		{
 			ToAddress = toAddress,
@@ -662,6 +613,13 @@ public partial class GalaChainWallet : Control
 				instance = _selectedTransferToken.Instance
 			}
 		};
+
+		var result = _walletService!.ValidateTransfer(draft, _selectedTransferToken.AvailableAmount);
+		if (!result.IsValid)
+		{
+			error = result.Error;
+			return false;
+		}
 
 		return true;
 	}

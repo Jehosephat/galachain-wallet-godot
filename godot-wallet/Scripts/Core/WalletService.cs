@@ -16,19 +16,22 @@ public class WalletService : IWalletService
 	private readonly IGalaChainClient _galaChainClient;
 	private readonly IGalaTransferClient _galaTransferClient;
 	private readonly GalaSigner _galaSigner;
+	private readonly DtoPolicyRegistry _policyRegistry;
 
 	public WalletService(
 		PasswordCryptoService? crypto = null,
 		IWalletStorage? storage = null,
 		IGalaChainClient? galaChainClient = null,
 		IGalaTransferClient? galaTransferClient = null,
-		GalaSigner? galaSigner = null)
+		GalaSigner? galaSigner = null,
+		DtoPolicyRegistry? policyRegistry = null)
 	{
 		_crypto = crypto ?? new PasswordCryptoService();
 		_storage = storage ?? new FileWalletStorage();
 		_galaChainClient = galaChainClient ?? new GalaChainClient();
 		_galaTransferClient = galaTransferClient ?? new GalaTransferClient();
 		_galaSigner = galaSigner ?? new GalaSigner();
+		_policyRegistry = policyRegistry ?? new DtoPolicyRegistry();
 	}
 
 	public bool HasWallet() => _state.HasWallet;
@@ -215,6 +218,19 @@ public class WalletService : IWalletService
 		return $"eth|{trimmed[2..]}";
 	}
 	
+	public ValidationResult ValidateTransfer(TransferDraft draft, decimal availableBalance)
+	{
+		var context = new TransactionContext
+		{
+			FromAddress = ToGalaAlias(_state.Address),
+			ToAddress = draft.ToAddress,
+			Quantity = draft.Quantity,
+			AvailableBalance = availableBalance
+		};
+
+		return _policyRegistry.Validate("TransferToken", context);
+	}
+
 	private GalaTransferTokenRequest BuildTransferRequest(TransferDraft draft)
 	{
 		long expiresAt = DateTimeOffset.UtcNow.AddMinutes(3).ToUnixTimeMilliseconds();

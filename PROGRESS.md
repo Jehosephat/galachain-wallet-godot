@@ -96,6 +96,20 @@ Six fixes applied in one pass:
   - Timer initializes on `_Ready` and resets on every user-initiated wallet action.
 - **File**: `Scripts/UI/GalaChainWallet.cs`
 
+### DTO policy registry for operation allowlisting
+- **Problem**: Blueprint (Section 13) calls for an explicit registry of supported operations so the wallet can formally reject unknown DTOs and centralize validation logic per operation.
+- **Changes**:
+  - Added `ITransactionPolicy` interface with `OperationId` and `Validate(TransactionContext)` — each supported operation implements this to define its own validation rules.
+  - Added `TransactionContext` (from/to address, quantity, available balance) and `ValidationResult` (IsValid, Error) supporting types.
+  - Added `TransferTokenPolicy` — implements all TransferToken validation (recipient format, self-transfer check, quantity parsing/bounds). This logic was previously inline in the UI's `TryBuildTransferDraft`.
+  - Added `DtoPolicyRegistry` — holds registered policies in a dictionary, auto-registers `TransferTokenPolicy` on construction. `Validate(operationId, context)` rejects unknown operations with "Unsupported operation: X".
+  - Injected `DtoPolicyRegistry` into `WalletService` via constructor DI.
+  - Added `ValidateTransfer(draft, availableBalance)` to `IWalletService`/`WalletService` — builds a `TransactionContext` and delegates to the registry.
+  - Refactored `TryBuildTransferDraft` in `GalaChainWallet.cs` to delegate all validation to `_walletService.ValidateTransfer()` instead of inline checks.
+- **New files**: `ITransactionPolicy.cs`, `TransferTokenPolicy.cs`, `DtoPolicyRegistry.cs`
+- **Modified files**: `IWalletService.cs`, `WalletService.cs`, `GalaChainWallet.cs`
+- **To add a new operation later**: implement `ITransactionPolicy`, register it in `DtoPolicyRegistry`, and add the corresponding service/client methods.
+
 ---
 
 ## Known issues remaining
@@ -103,7 +117,7 @@ See `PROJECT-ANALYSIS.md` Section 5 for the full critical issues list. Key items
 - ~~Mnemonic-imported wallets cannot sign after unlock (private key not re-derived)~~ — Fixed
 - ~~No `dtoOperation` field on transfer requests~~ — **Deferred**: GalaChain's current Gateway API does not reliably support this field; operation routing is handled by endpoint URL. Revisit if GalaChain adds support.
 - ~~`GalaCanonicalJson` does not exclude `signature`/`trace` fields~~ — Fixed
-- No DTO policy registry / allowlist enforcement
+- ~~No DTO policy registry / allowlist enforcement~~ — Fixed
 - ~~No idle timeout / auto-lock~~ — Fixed (5-minute timeout)
 - No unit tests
 - ~~Interface/class file name swap (`GalaTransferClient.cs` ↔ `IGalaTransferClient.cs`)~~ — Fixed
