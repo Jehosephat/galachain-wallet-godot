@@ -168,6 +168,11 @@ Six fixes applied in one pass:
   - `TaskCanceledException` is caught and returned as `NetworkResult.TransportError` with a descriptive timeout message.
 - **Files**: `GalaChainNetworkConfig.cs`, `GalaChainClient.cs`, `GalaTransferClient.cs`
 
+### Signature verification before submitting
+- **Problem**: If signing produced a bad signature (corrupted state, key mismatch), the invalid transaction would be submitted to GalaChain and fail with a vague server error.
+- **Change**: After signing, `GalaSigner.SignTransfer` now recovers the Ethereum address from the signature and verifies it matches the signer's key address. If they don't match, it throws `InvalidOperationException` with a clear message — the transaction is never submitted.
+- **File**: `Scripts/Core/GalaSigner.cs`
+
 ### Remove dead code
 - **Removed**: `ClipboardService.cs` (empty stub, unused), `WalletAddressModel.cs` (empty stub, unused), their `.uid` files, and the now-empty `Scripts/Services/` directory. `BuildStatusText()` was already removed in #16.
 - **Updated**: `AGENTS.md` — removed `GalaWallet.Services` namespace entry.

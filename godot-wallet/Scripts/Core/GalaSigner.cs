@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using Nethereum.Signer;
 using Nethereum.Util;
@@ -26,5 +27,19 @@ public class GalaSigner
 		var signature = key.SignAndCalculateV(hash);
 
 		request.signature = EthECDSASignature.CreateStringSignature(signature);
+
+		VerifySignature(hash, signature, key.GetPublicAddress());
+	}
+
+	private static void VerifySignature(byte[] hash, EthECDSASignature signature, string expectedAddress)
+	{
+		var recoveredKey = EthECKey.RecoverFromSignature(signature, hash);
+		string recoveredAddress = recoveredKey.GetPublicAddress();
+
+		if (!string.Equals(recoveredAddress, expectedAddress, StringComparison.OrdinalIgnoreCase))
+		{
+			throw new InvalidOperationException(
+				$"Signature verification failed: recovered address {recoveredAddress} does not match expected {expectedAddress}.");
+		}
 	}
 }
