@@ -22,6 +22,10 @@ public partial class GalaChainWallet : Control
 	private Button _refreshBalancesButton = null!;
 	private Button _createWalletButton = null!;
 	private AcceptDialog _simpleMessageDialog = null!;
+	private AcceptDialog _recoveryPhraseDialog = null!;
+	private GridContainer _recoveryPhraseGrid = null!;
+	private Button _copyPhraseButton = null!;
+	private string _currentRecoveryPhrase = "";
 	private ConfirmationDialog _importPrivateKeyDialog = null!;
 	private LineEdit _importPrivateKeyInput = null!;
 	private ConfirmationDialog _passwordDialog = null!;
@@ -74,6 +78,9 @@ public partial class GalaChainWallet : Control
 		_copyAddressButton = GetNode<Button>("%CopyAddressButton");
 		_refreshBalancesButton = GetNode<Button>("%RefreshBalancesButton");
 		_simpleMessageDialog = GetNode<AcceptDialog>("%SimpleMessageDialog");
+		_recoveryPhraseDialog = GetNode<AcceptDialog>("%RecoveryPhraseDialog");
+		_recoveryPhraseGrid = GetNode<GridContainer>("%RecoveryPhraseGrid");
+		_copyPhraseButton = GetNode<Button>("%CopyPhraseButton");
 		_importPrivateKeyDialog = GetNode<ConfirmationDialog>("%ImportPrivateKeyDialog");
 		_importPrivateKeyInput = GetNode<LineEdit>("%ImportPrivateKeyInput");
 		_passwordDialog = GetNode<ConfirmationDialog>("%PasswordDialog");
@@ -105,6 +112,8 @@ public partial class GalaChainWallet : Control
 		_transferDialog.Confirmed += OnTransferDialogConfirmed;
 		_transferToInput.TextChanged += OnTransferInputChanged;
 		_transferQuantityInput.TextChanged += OnTransferInputChanged;
+
+		_copyPhraseButton.Pressed += OnCopyPhrasePressed;
 
 		_passwordInput.TextSubmitted += _ => { _passwordDialog.Hide(); OnPasswordDialogConfirmed(); };
 		_importPrivateKeyInput.TextSubmitted += _ => { _importPrivateKeyDialog.Hide(); OnImportPrivateKeyConfirmed(); };

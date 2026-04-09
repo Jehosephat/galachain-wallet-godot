@@ -109,13 +109,7 @@ public partial class GalaChainWallet
 					var phrase = walletService.ConsumePendingRecoveryPhrase();
 					if (!string.IsNullOrWhiteSpace(phrase))
 					{
-						_simpleMessageDialog.Title = "Recovery Phrase";
-						_simpleMessageDialog.DialogText =
-							"Write this down and store it safely.\n\n" +
-							"This is the only time it will be shown:\n\n" +
-							phrase;
-
-						_simpleMessageDialog.PopupCentered();
+						ShowRecoveryPhraseDialog(phrase);
 					}
 
 					Log("Created wallet and saved encrypted wallet file.");
@@ -220,5 +214,36 @@ public partial class GalaChainWallet
 		_passwordInput.Text = "";
 		_passwordDialog.PopupCentered(new Vector2I(420, 160));
 		_passwordInput.GrabFocus();
+	}
+
+	private void ShowRecoveryPhraseDialog(string phrase)
+	{
+		_currentRecoveryPhrase = phrase;
+
+		// Clear previous grid content
+		foreach (var child in _recoveryPhraseGrid.GetChildren())
+		{
+			child.QueueFree();
+		}
+
+		// Populate grid with numbered words
+		string[] words = phrase.Split(' ');
+		for (int i = 0; i < words.Length; i++)
+		{
+			var label = new Label();
+			label.Text = $"{i + 1}. {words[i]}";
+			_recoveryPhraseGrid.AddChild(label);
+		}
+
+		_recoveryPhraseDialog.PopupCentered(new Vector2I(480, 340));
+	}
+
+	private void OnCopyPhrasePressed()
+	{
+		if (!string.IsNullOrWhiteSpace(_currentRecoveryPhrase))
+		{
+			DisplayServer.ClipboardSet(_currentRecoveryPhrase);
+			Log("Recovery phrase copied to clipboard.");
+		}
 	}
 }

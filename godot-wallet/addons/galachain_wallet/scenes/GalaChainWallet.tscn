@@ -198,6 +198,34 @@ placeholder_text = "word1 word2 word3..."
 [node name="SimpleMessageDialog" type="AcceptDialog" parent="." unique_id=1829777973]
 unique_name_in_owner = true
 
+[node name="RecoveryPhraseDialog" type="AcceptDialog" parent="."]
+unique_name_in_owner = true
+title = "Recovery Phrase"
+ok_button_text = "I've saved my recovery phrase"
+size = Vector2i(480, 340)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="RecoveryPhraseDialog"]
+offset_right = 450.0
+offset_bottom = 280.0
+theme_override_constants/separation = 12
+
+[node name="WarningLabel" type="Label" parent="RecoveryPhraseDialog/VBoxContainer"]
+layout_mode = 2
+text = "Write this down and store it safely. This is the only time it will be shown."
+autowrap_mode = 2
+
+[node name="RecoveryPhraseGrid" type="GridContainer" parent="RecoveryPhraseDialog/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 8
+columns = 3
+
+[node name="CopyPhraseButton" type="Button" parent="RecoveryPhraseDialog/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Copy to Clipboard"
+
 [node name="PasswordDialog" type="ConfirmationDialog" parent="." unique_id=596228900]
 unique_name_in_owner = true
 title = "Wallet Password"

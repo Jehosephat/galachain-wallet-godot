@@ -129,7 +129,7 @@ Source: `testing-feedback-4-9-26.md`
 
 ---
 
-## 8. Seed phrase should be easier to read and copy (copy button) — OPEN
+## 8. Seed phrase should be easier to read and copy (copy button) — RESOLVED
 
 **Feedback**: The recovery phrase dialog just dumps the words into an AcceptDialog. It should be more readable and have a copy button.
 
@@ -232,7 +232,7 @@ Proposed signals:
 | 5 | Move Refresh Balances button | Small | Medium (UX) | **Resolved** |
 | 2 | Hide To/Qty in game-initiated transfer | Small | Medium (UX) | **Resolved** |
 | 1 | Demo shows balance | Small | Medium (demo) | Open |
-| 8 | Better recovery phrase dialog | Medium | Medium (UX) | Open |
+| 8 | Better recovery phrase dialog | Medium | Medium (UX) | **Resolved** |
 | 11 | Wallet signals for game events | Medium | Medium (integration) | Open |
 | 3 | Visual cleanup / theming | Medium | Medium (polish) | Open |
 | 6 | Token icons in balances | Large | Low (nice-to-have) | Open |
