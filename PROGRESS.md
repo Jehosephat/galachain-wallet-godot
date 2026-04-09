@@ -123,6 +123,18 @@ Six fixes applied in one pass:
 - **New file**: `Scripts/Models/NetworkResult.cs`
 - **Modified files**: `IGalaChainClient.cs`, `GalaChainClient.cs`, `IGalaTransferClient.cs`, `GalaTransferClient.cs`, `IWalletService.cs`, `WalletService.cs`, `GalaChainWallet.cs`
 
+### Golden vector tests for canonical JSON serialization
+- **Problem**: Blueprint (Section 21) requires golden vector tests — verified against known GalaChain inputs/outputs — to prove wire-compatibility of the serializer and signer.
+- **Changes**:
+  - Added `GoldenVectorTests.cs` with 5 tests verified against real mainnet transaction: block 9627175, TX `50fef561...` ([explorer link](https://explorer.galachain.com/details/asset-channel/9627175)).
+  - **CanonicalJson_MatchesExpectedOutput** — exact string match of our serializer output against the expected canonical form of the on-chain DTO.
+  - **CanonicalJson_ExcludesSignatureAndTrace** — verifies both fields are stripped from a real DTO that contained them.
+  - **Keccak256Hash_IsConsistentWithSignature** — computes keccak256 of our canonical JSON, recovers the Ethereum address from the on-chain signature, and verifies it matches the signer's address (`0xcbf9a4A8b541177CD762d61f561Be4aF65561677` from the GCUP read set).
+  - **CanonicalJson_KeyOrder_MatchesGalaChainExpectation** — verifies alphabetical root key ordering.
+  - **CanonicalJson_NestedKeyOrder_MatchesGalaChainExpectation** — verifies alphabetical key ordering within tokenInstance.
+- **Result**: 26 total tests, all passing.
+- **New file**: `Tests/GoldenVectorTests.cs`
+
 ### Unit tests for serializer, signer, and crypto service
 - **Problem**: Blueprint (Section 21) requires unit tests for the core signing and crypto components. None existed.
 - **Changes**:
