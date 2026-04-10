@@ -151,9 +151,20 @@ _wallet.TransferCompleted += (to, qty, sym) => { /* grant item, etc. */ };
 ### Idle timeout
 The wallet auto-locks after 5 minutes of inactivity (`IdleTimeoutSeconds = 300`). The idle timer resets on every user-initiated wallet action. `_Process` checks the timer each frame when the wallet is unlocked.
 
+## Network Switching (Mainnet vs Testnet)
+
+Mainnet is the default. Games can target testnet or a custom gateway by providing a config.
+
+**C#**: `new WalletFacade(GalaChainNetworkConfig.Testnet())` or pass a fully-customized `GalaChainNetworkConfig`. The facade wires the config into `GalaChainClient` and `GalaTransferClient` internally.
+
+**GDScript**: `Wallet.UseTestnet()`, `Wallet.UseMainnet()`, or `Wallet.UseCustomNetwork(apiBaseUrl, channel, contract)`. These rebuild the internal facade — call them in `_Ready()` **before** any other wallet operations, since they reset state.
+
+`GalaChainNetworkConfig` has static factories `Mainnet()` and `Testnet()` with the canonical URLs as constants (`MainnetUrl`, `TestnetUrl`). Add new named networks by adding a static factory, not by creating parallel config classes.
+
 ## GalaChain API Details
 
-- **Gateway**: `https://gateway-mainnet.galachain.com/api`
+- **Gateway (mainnet)**: `https://gateway-mainnet.galachain.com/api`
+- **Gateway (testnet)**: `https://gateway-testnet.galachain.com/api`
 - **Balance fetch**: `POST /asset/token-contract/FetchBalances` — body: `{ owner: "eth|<address>" }`
 - **Transfer submit**: `POST /asset/token-contract/TransferToken` — body: signed DTO
 - **Dry-run**: `POST /asset/token-contract/DryRun` — body: `{ method: "TransferToken", signerAddress: "eth|...", dto: { ...unsigned transfer fields... } }`

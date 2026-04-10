@@ -27,7 +27,12 @@ public partial class WalletBridge : Node
 
 	public override void _Ready()
 	{
-		_facade = new WalletFacade();
+		SetFacade(new WalletFacade());
+	}
+
+	private void SetFacade(WalletFacade facade)
+	{
+		_facade = facade;
 
 		_facade.WalletCreated += addr => EmitSignal(SignalName.WalletCreated, addr);
 		_facade.WalletImported += addr => EmitSignal(SignalName.WalletImported, addr);
@@ -40,6 +45,40 @@ public partial class WalletBridge : Node
 		_facade.MessageSigned += (msg, sig, addr) => EmitSignal(SignalName.MessageSigned, msg, sig, addr);
 		_facade.MessageSignDeclined += () => EmitSignal(SignalName.MessageSignDeclined);
 		_facade.BalancesRefreshed += () => EmitSignal(SignalName.BalancesRefreshed);
+	}
+
+	/// <summary>
+	/// Switches the wallet to GalaChain testnet. Call this in _Ready() of your
+	/// main scene BEFORE any wallet operations (OpenWallet, RefreshBalances, etc.).
+	/// Replaces the internal facade so any previously-loaded wallet state is reset.
+	/// </summary>
+	public void UseTestnet()
+	{
+		SetFacade(new WalletFacade(GalaChainNetworkConfig.Testnet()));
+	}
+
+	/// <summary>
+	/// Switches the wallet to GalaChain mainnet. Mainnet is the default — you only
+	/// need to call this if you previously switched to testnet or a custom network.
+	/// </summary>
+	public void UseMainnet()
+	{
+		SetFacade(new WalletFacade(GalaChainNetworkConfig.Mainnet()));
+	}
+
+	/// <summary>
+	/// Switches the wallet to a custom GalaChain gateway. Call this in _Ready()
+	/// of your main scene BEFORE any wallet operations.
+	/// </summary>
+	public void UseCustomNetwork(string apiBaseUrl, string channel = "asset", string contract = "token-contract")
+	{
+		var config = new GalaChainNetworkConfig
+		{
+			ApiBaseUrl = apiBaseUrl,
+			Channel = channel,
+			Contract = contract
+		};
+		SetFacade(new WalletFacade(config));
 	}
 
 	public void OpenWallet(Control parent)

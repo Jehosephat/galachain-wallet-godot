@@ -1,9 +1,11 @@
 using Godot;
 using GalaWallet.Core;
+using GalaWallet.Models;
 
 public partial class WalletDemoGame : Control
 {
 	private WalletFacade _walletFacade = null!;
+	private OptionButton _networkOption = null!;
 	private Button _openWalletButton = null!;
 	private Button _closeWalletButton = null!;
 	private Button _makePurchaseButton = null!;
@@ -15,8 +17,7 @@ public partial class WalletDemoGame : Control
 
 	public override void _Ready()
 	{
-		_walletFacade = new WalletFacade();
-
+		_networkOption = GetNode<OptionButton>("%NetworkOption");
 		_openWalletButton = GetNode<Button>("%OpenWalletButton");
 		_closeWalletButton = GetNode<Button>("%CloseWalletButton");
 		_makePurchaseButton = GetNode<Button>("%MakePurchaseButton");
@@ -26,11 +27,30 @@ public partial class WalletDemoGame : Control
 		_gameStatusLabel = GetNode<Label>("%GameStatusLabel");
 		_gameBalanceLabel = GetNode<Label>("%GameBalanceLabel");
 
+		_networkOption.ItemSelected += OnNetworkChanged;
 		_openWalletButton.Pressed += OnOpenWalletPressed;
 		_closeWalletButton.Pressed += OnCloseWalletPressed;
 		_makePurchaseButton.Pressed += OnMakePurchasePressed;
 		_burnGalaButton.Pressed += OnBurnGalaPressed;
 		_loginButton.Pressed += OnLoginPressed;
+
+		CreateWalletFacade(GalaChainNetworkConfig.Mainnet());
+		UpdateStatus();
+	}
+
+	private void CreateWalletFacade(GalaChainNetworkConfig config)
+	{
+		// Close any existing wallet UI so the old instance is released
+		if (_walletFacade != null)
+		{
+			_walletFacade.CloseWallet();
+			foreach (var child in _walletMount.GetChildren())
+			{
+				child.QueueFree();
+			}
+		}
+
+		_walletFacade = new WalletFacade(config);
 
 		_walletFacade.WalletCreated += _ => UpdateStatus();
 		_walletFacade.WalletImported += _ => UpdateStatus();
@@ -64,7 +84,18 @@ public partial class WalletDemoGame : Control
 		{
 			GD.Print("[Demo] Login declined by user.");
 		};
+	}
 
+	private void OnNetworkChanged(long index)
+	{
+		var config = index == 1
+			? GalaChainNetworkConfig.Testnet()
+			: GalaChainNetworkConfig.Mainnet();
+
+		string label = index == 1 ? "Testnet" : "Mainnet";
+		GD.Print($"[Demo] Switching wallet to {label} ({config.ApiBaseUrl})");
+
+		CreateWalletFacade(config);
 		UpdateStatus();
 	}
 

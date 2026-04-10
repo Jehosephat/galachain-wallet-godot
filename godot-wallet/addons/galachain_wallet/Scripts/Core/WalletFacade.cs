@@ -26,11 +26,27 @@ public class WalletFacade
 	public event Action? MessageSignDeclined;
 	public event Action? BalancesRefreshed;
 
+	/// <summary>
+	/// Creates a WalletFacade. Defaults to GalaChain mainnet.
+	/// Pass a custom IWalletService for testing or dependency injection scenarios.
+	/// </summary>
 	public WalletFacade(IWalletService? walletService = null)
 	{
 		_walletService = walletService ?? new WalletService();
 		_walletService.LoadWalletMetadataIfPresent();
 		_galaChainWalletScene = GD.Load<PackedScene>("res://addons/galachain_wallet/scenes/GalaChainWallet.tscn");
+	}
+
+	/// <summary>
+	/// Creates a WalletFacade configured for a specific GalaChain network.
+	/// Use GalaChainNetworkConfig.Testnet() for testnet, or build a custom config
+	/// with your own ApiBaseUrl, Channel, and Contract.
+	/// </summary>
+	public WalletFacade(GalaChainNetworkConfig config)
+		: this(new WalletService(
+			galaChainClient: new GalaChainClient(config),
+			galaTransferClient: new GalaTransferClient(config)))
+	{
 	}
 
 	public void OpenWallet(Control parent)

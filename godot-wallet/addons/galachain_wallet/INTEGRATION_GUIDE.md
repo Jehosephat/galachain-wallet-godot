@@ -301,26 +301,48 @@ The wallet connects to GalaChain mainnet by default:
 - Channel: `asset`
 - Contract: `token-contract`
 
-To use a different environment (e.g., testnet), pass a custom config when creating the service:
+#### Switching to Testnet (C#)
+
+Pass a testnet config when creating the facade:
 
 ```csharp
+// Shortcut — built-in testnet gateway URL
+_wallet = new WalletFacade(GalaChainNetworkConfig.Testnet());
+
+// Or build a custom config explicitly
 var config = new GalaChainNetworkConfig
 {
-    ApiBaseUrl = "https://your-gateway-url/api",
+    ApiBaseUrl = "https://gateway-testnet.galachain.com/api",
     Channel = "asset",
     Contract = "token-contract"
 };
-
-var galaChainClient = new GalaChainClient(config);
-var transferClient = new GalaTransferClient(config);
-
-var walletService = new WalletService(
-    galaChainClient: galaChainClient,
-    galaTransferClient: transferClient
-);
-
-var wallet = new WalletFacade(walletService);
+_wallet = new WalletFacade(config);
 ```
+
+Do this in `_Ready()` before any wallet operations. Switching networks is not something the end user toggles — it's a build-time decision made by the game developer.
+
+#### Switching to Testnet (GDScript)
+
+The `Wallet` autoload starts on mainnet by default. Call `UseTestnet()` once in your main scene's `_ready()`, before any other wallet operations:
+
+```gdscript
+func _ready():
+    Wallet.UseTestnet()
+
+    # Now connect signals, open wallet, etc. as usual
+    Wallet.WalletUnlocked.connect(_on_wallet_unlocked)
+    Wallet.OpenWallet($WalletMount)
+```
+
+Other options:
+
+```gdscript
+Wallet.UseMainnet()                                    # explicit mainnet (default)
+Wallet.UseCustomNetwork("https://my-gateway/api")      # custom gateway
+Wallet.UseCustomNetwork("https://my-gateway/api", "my-channel", "my-contract")
+```
+
+**Important**: Call the network-switching method before any wallet operations. It replaces the internal wallet state — calling it after a wallet has been created, unlocked, or had transactions will reset everything.
 
 ## API Reference
 
