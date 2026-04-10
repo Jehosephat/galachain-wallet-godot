@@ -108,11 +108,6 @@ _wallet.TransferCompleted += (to, qty, sym) => { /* grant item, etc. */ };
 ### GDScript compatibility via WalletBridge
 `WalletBridge` (Node) wraps `WalletFacade` for GDScript interop. Registered as autoload singleton "Wallet" by `WalletPlugin`. C# games use `WalletFacade` directly; GDScript games use the `Wallet` autoload. When adding new facade methods or events, also add them to `WalletBridge` — signals for events, Godot-compatible types for return values (`Array<Dictionary>` instead of `List<T>`).
 
-### Game-side operations via GameOperations
-`GameOperations` handles operations signed with the game's own private key (not the player's wallet). Currently supports `MintTokenAsync`. Uses the same signing infrastructure (`GalaSigner`, `GalaCanonicalJson`) and network config as wallet operations. The game provides its private key per-call — `GameOperations` does not store keys.
-
-For GDScript: `WalletBridge` exposes `MintToken()` and emits `MintCompleted`/`MintFailed` signals.
-
 ### Idle timeout
 The wallet auto-locks after 5 minutes of inactivity (`IdleTimeoutSeconds = 300`). The idle timer resets on every user-initiated wallet action. `_Process` checks the timer each frame when the wallet is unlocked.
 

@@ -27,8 +27,6 @@
     <Compile Include="..\addons\galachain_wallet\Scripts\Models\EncryptedWalletRecord.cs" Link="Models\EncryptedWalletRecord.cs" />
     <Compile Include="..\addons\galachain_wallet\Scripts\Models\WalletSecretPayload.cs" Link="Models\WalletSecretPayload.cs" />
     <Compile Include="..\addons\galachain_wallet\Scripts\Models\WalletSecretType.cs" Link="Models\WalletSecretType.cs" />
-    <Compile Include="..\addons\galachain_wallet\Scripts\Models\GalaMintTokenRequest.cs" Link="Models\GalaMintTokenRequest.cs" />
-    <Compile Include="..\addons\galachain_wallet\Scripts\Models\GalaTokenClassKey.cs" Link="Models\GalaTokenClassKey.cs" />
     <Compile Include="..\addons\galachain_wallet\Scripts\Models\GalaChainResponse.cs" Link="Models\GalaChainResponse.cs" />
     <Compile Include="..\addons\galachain_wallet\Scripts\Models\NetworkResult.cs" Link="Models\NetworkResult.cs" />
     <Compile Include="..\addons\galachain_wallet\Scripts\Models\GalaChainNetworkConfig.cs" Link="Models\GalaChainNetworkConfig.cs" />
