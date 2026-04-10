@@ -10,6 +10,7 @@ public class DtoPolicyRegistry
 	public DtoPolicyRegistry()
 	{
 		Register(new TransferTokenPolicy());
+		Register(new MintTokenPolicy());
 	}
 
 	public void Register(ITransactionPolicy policy)

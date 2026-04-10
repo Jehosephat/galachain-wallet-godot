@@ -259,6 +259,85 @@ public partial class GameShop : Control
 }
 ```
 
+## Game-Side Operations (Minting)
+
+The plugin also provides `GameOperations` for operations signed with the **game's** private key, not the player's wallet. This is used for things like minting tokens to players.
+
+### C# Usage
+
+```csharp
+using GalaWallet.Core;
+using GalaWallet.Models;
+
+// Create once (e.g., in _Ready)
+var gameOps = new GameOperations();
+
+// Mint an NFT to the connected player
+var result = await gameOps.MintTokenAsync(
+    "0xYOUR_GAME_PRIVATE_KEY",      // game's minting key (hex)
+    new MintTokenParams
+    {
+        Collection = "MyGame",
+        Category = "Weapon",
+        Type = "Sword",
+        AdditionalKey = "Epic",
+        Owner = wallet.GetCurrentAddress(),  // player's address
+        Quantity = "1"
+    }
+);
+
+if (result.Success)
+{
+    GD.Print($"Minted {result.MintedInstances.Count} token(s)");
+    foreach (var instance in result.MintedInstances)
+        GD.Print($"  Instance #{instance.Instance}");
+}
+else
+{
+    GD.Print($"Mint failed: {result.Message}");
+}
+```
+
+### GDScript Usage
+
+```gdscript
+# The Wallet autoload also provides minting
+Wallet.MintCompleted.connect(_on_mint_completed)
+Wallet.MintFailed.connect(_on_mint_failed)
+
+func mint_reward_to_player():
+    var player_address = Wallet.GetCurrentAddress()
+    Wallet.MintToken(
+        "0xYOUR_GAME_PRIVATE_KEY",
+        "MyGame",       # collection
+        "Weapon",       # category
+        "Sword",        # type
+        "Epic",         # additional_key
+        player_address, # owner
+        "1"             # quantity
+    )
+
+func _on_mint_completed(owner: String, quantity: String, collection: String):
+    print("Minted %s %s to %s" % [quantity, collection, owner])
+
+func _on_mint_failed(error: String):
+    print("Mint failed: ", error)
+```
+
+### Requirements for Minting
+
+- The game's private key must have **mint allowance** on the token class. This is granted on-chain by an address listed in the token class's `authorities`.
+- The token class (collection/category/type/additionalKey) must already exist on GalaChain.
+- For NFTs, each minted unit creates a unique instance with an auto-assigned instance number.
+- For fungible tokens, `quantity` can include decimals per the token class's `decimals` setting.
+
+### Security Note
+
+The game's private key is a **server-side secret**. In a production game:
+- Never hardcode it in the game client
+- Call minting from a trusted game server, not the client
+- The demo hardcodes it for testing purposes only
+
 ## How the Wallet Works (For Context)
 
 ### Wallet Lifecycle

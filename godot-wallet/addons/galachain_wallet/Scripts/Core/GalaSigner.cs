@@ -8,27 +8,33 @@ namespace GalaWallet.Core;
 
 public class GalaSigner
 {
-	public void SignTransfer(GalaTransferTokenRequest request, string privateKey)
+	/// <summary>
+	/// Signs any object using canonical JSON serialization + keccak256 + secp256k1.
+	/// GalaCanonicalJson automatically excludes signature/trace fields.
+	/// Returns the hex signature string.
+	/// </summary>
+	public string Sign(object payload, string privateKey)
 	{
-		var payloadToSign = new
-		{
-			from = request.from,
-			to = request.to,
-			tokenInstance = request.tokenInstance,
-			quantity = request.quantity,
-			uniqueKey = request.uniqueKey,
-			dtoExpiresAt = request.dtoExpiresAt
-		};
-
-		string canonicalJson = GalaCanonicalJson.Serialize(payloadToSign);
+		string canonicalJson = GalaCanonicalJson.Serialize(payload);
 		byte[] hash = new Sha3Keccack().CalculateHash(Encoding.UTF8.GetBytes(canonicalJson));
 
 		var key = new EthECKey(privateKey);
 		var signature = key.SignAndCalculateV(hash);
-
-		request.signature = EthECDSASignature.CreateStringSignature(signature);
+		string signatureHex = EthECDSASignature.CreateStringSignature(signature);
 
 		VerifySignature(hash, signature, key.GetPublicAddress());
+
+		return signatureHex;
+	}
+
+	public void SignTransfer(GalaTransferTokenRequest request, string privateKey)
+	{
+		request.signature = Sign(request, privateKey);
+	}
+
+	public void SignMint(GalaMintTokenRequest request, string privateKey)
+	{
+		request.signature = Sign(request, privateKey);
 	}
 
 	private static void VerifySignature(byte[] hash, EthECDSASignature signature, string expectedAddress)

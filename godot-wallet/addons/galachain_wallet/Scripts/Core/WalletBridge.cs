@@ -103,4 +103,36 @@ public partial class WalletBridge : Node
 		}
 		return "";
 	}
+
+	// --- Game-side operations (uses game's key, not wallet key) ---
+
+	private GameOperations _gameOps = new();
+
+	/// <summary>
+	/// Mints tokens using the game's private key.
+	/// GDScript-compatible: returns a Dictionary with success, message, and minted_instances.
+	/// </summary>
+	public async void MintToken(
+		string gamePrivateKey,
+		string collection, string category, string type, string additionalKey,
+		string owner, string quantity)
+	{
+		var result = await _gameOps.MintTokenAsync(gamePrivateKey, new MintTokenParams
+		{
+			Collection = collection,
+			Category = category,
+			Type = type,
+			AdditionalKey = additionalKey,
+			Owner = owner,
+			Quantity = quantity
+		});
+
+		if (result.Success)
+			EmitSignal(SignalName.MintCompleted, owner, quantity, collection);
+		else
+			EmitSignal(SignalName.MintFailed, result.Message);
+	}
+
+	[Signal] public delegate void MintCompletedEventHandler(string owner, string quantity, string collection);
+	[Signal] public delegate void MintFailedEventHandler(string error);
 }

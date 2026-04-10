@@ -16,7 +16,9 @@ public static class GalaCanonicalJson
 	private static readonly HashSet<string> ExcludedFields = new(StringComparer.OrdinalIgnoreCase)
 	{
 		"signature",
-		"trace"
+		"trace",
+		"multisig",
+		"prefix"
 	};
 
 	private static object? Normalize(object? value, bool isRoot = false)
