@@ -20,15 +20,32 @@ public class GalaSigner
 			dtoExpiresAt = request.dtoExpiresAt
 		};
 
-		string canonicalJson = GalaCanonicalJson.Serialize(payloadToSign);
+		request.signature = SignPayload(payloadToSign, privateKey);
+	}
+
+	public void SignBurn(GalaBurnTokensRequest request, string privateKey)
+	{
+		var payloadToSign = new
+		{
+			tokenInstances = request.tokenInstances,
+			uniqueKey = request.uniqueKey,
+			dtoExpiresAt = request.dtoExpiresAt
+		};
+
+		request.signature = SignPayload(payloadToSign, privateKey);
+	}
+
+	private static string SignPayload(object payload, string privateKey)
+	{
+		string canonicalJson = GalaCanonicalJson.Serialize(payload);
 		byte[] hash = new Sha3Keccack().CalculateHash(Encoding.UTF8.GetBytes(canonicalJson));
 
 		var key = new EthECKey(privateKey);
 		var signature = key.SignAndCalculateV(hash);
-
-		request.signature = EthECDSASignature.CreateStringSignature(signature);
+		string signatureHex = EthECDSASignature.CreateStringSignature(signature);
 
 		VerifySignature(hash, signature, key.GetPublicAddress());
+		return signatureHex;
 	}
 
 	private static void VerifySignature(byte[] hash, EthECDSASignature signature, string expectedAddress)

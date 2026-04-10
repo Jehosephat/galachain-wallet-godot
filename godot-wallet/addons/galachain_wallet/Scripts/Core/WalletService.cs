@@ -276,4 +276,62 @@ public class WalletService : IWalletService
 
 		return result;
 	}
+
+	public ValidationResult ValidateBurn(BurnDraft draft, decimal availableBalance)
+	{
+		var context = new TransactionContext
+		{
+			FromAddress = ToGalaAlias(_state.Address),
+			Quantity = draft.Quantity,
+			AvailableBalance = availableBalance
+		};
+
+		return _policyRegistry.Validate("BurnTokens", context);
+	}
+
+	private GalaBurnTokensRequest BuildBurnRequest(BurnDraft draft)
+	{
+		long expiresAt = DateTimeOffset.UtcNow.AddMinutes(3).ToUnixTimeMilliseconds();
+
+		return new GalaBurnTokensRequest
+		{
+			tokenInstances = new List<BurnTokenQuantity>
+			{
+				new BurnTokenQuantity
+				{
+					tokenInstanceKey = draft.TokenInstance,
+					quantity = draft.Quantity
+				}
+			},
+			uniqueKey = $"godot-wallet-{System.Guid.NewGuid()}",
+			dtoExpiresAt = expiresAt
+		};
+	}
+
+	public async Task<NetworkResult<TransferPreviewResult>> PreviewBurnAsync(BurnDraft draft)
+	{
+		if (!_state.HasWallet || !_state.IsUnlocked)
+			return NetworkResult<TransferPreviewResult>.Rejected("Wallet must be unlocked to preview burn.");
+
+		var request = BuildBurnRequest(draft);
+		return await _galaChainClient.DryRunBurnAsync(request, ToGalaAlias(_state.Address));
+	}
+
+	public async Task<NetworkResult<string>> SubmitBurnAsync(BurnDraft draft)
+	{
+		if (!_state.HasWallet || !_state.IsUnlocked)
+			return NetworkResult<string>.Rejected("Wallet must be unlocked to burn.");
+
+		if (string.IsNullOrWhiteSpace(_state.PrivateKey))
+			return NetworkResult<string>.Rejected("Private key is not available in memory.");
+
+		var request = BuildBurnRequest(draft);
+		_galaSigner.SignBurn(request, _state.PrivateKey);
+
+		var result = await _galaTransferClient.BurnTokensAsync(request);
+		if (result.IsSuccess)
+			await RefreshBalancesAsync();
+
+		return result;
+	}
 }

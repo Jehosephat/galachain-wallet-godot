@@ -141,6 +141,7 @@ public partial class GalaChainWallet
 						WalletUnlocked?.Invoke(walletService.GetAddress());
 						BalancesRefreshed?.Invoke();
 						ConsumePendingTransfer();
+						ConsumePendingBurn();
 					}
 					break;
 

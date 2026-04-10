@@ -20,6 +20,8 @@ public class WalletFacade
 	public event Action? WalletLocked;
 	public event Action<string, string, string>? TransferCompleted;
 	public event Action<string>? TransferFailed;
+	public event Action<string, string>? BurnCompleted;
+	public event Action<string>? BurnFailed;
 	public event Action? BalancesRefreshed;
 
 	public WalletFacade(IWalletService? walletService = null)
@@ -85,6 +87,16 @@ public class WalletFacade
 		_galaChainWallet.RequestTransfer(toAddress, quantity, tokenSymbol);
 	}
 
+	public void RequestBurn(string quantity, string tokenSymbol)
+	{
+		if (_galaChainWallet == null)
+		{
+			return;
+		}
+
+		_galaChainWallet.RequestBurn(quantity, tokenSymbol);
+	}
+
 	private void SubscribeToWalletEvents(GalaChainWallet wallet)
 	{
 		wallet.WalletCreated += addr => WalletCreated?.Invoke(addr);
@@ -93,6 +105,8 @@ public class WalletFacade
 		wallet.WalletLocked += () => WalletLocked?.Invoke();
 		wallet.TransferCompleted += (to, qty, sym) => TransferCompleted?.Invoke(to, qty, sym);
 		wallet.TransferFailed += err => TransferFailed?.Invoke(err);
+		wallet.BurnCompleted += (qty, sym) => BurnCompleted?.Invoke(qty, sym);
+		wallet.BurnFailed += err => BurnFailed?.Invoke(err);
 		wallet.BalancesRefreshed += () => BalancesRefreshed?.Invoke();
 	}
 }

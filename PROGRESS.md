@@ -248,6 +248,25 @@ Six fixes applied in one pass:
 - **Files**: `GalaFetchBalancesResponse.cs`, `GalaBalanceDto.cs`, `GalaChainNetworkConfig.cs`, `TokenBalanceModel.cs`, `GalaChainClient.cs`, `GalaChainWallet.cs`, `WalletBridge.cs`
 - **Known issue**: .NET `HttpClient` has intermittent TLS handshake failures with `tokens.gala.games` and `static.gala.games` CDNs in the Godot runtime. Retries mitigate this but some icons may still fail to load on a given run. A future fix would be to use Godot's native `HttpRequest` node for icon downloads if the TLS issue can be resolved there.
 
+## 2026-04-10
+
+### Burn support
+- **Problem**: Wallet only supported TransferToken. Players couldn't burn tokens they own.
+- **Changes**:
+  - New models: `GalaBurnTokensRequest` (DTO with `tokenInstances[]`, `uniqueKey`, `dtoExpiresAt`, `signature`), `BurnTokenQuantity` (wraps `tokenInstanceKey` + `quantity`), `BurnDraft` (UI-facing).
+  - Added `BurnTokensUrl` computed property to `GalaChainNetworkConfig` (`/BurnTokens` endpoint).
+  - `GalaSigner.SignBurn()` — refactored to share a private `SignPayload` helper with `SignTransfer`.
+  - `BurnTokensPolicy` — validates quantity is positive and within available balance. Registered in `DtoPolicyRegistry`.
+  - `IGalaTransferClient.BurnTokensAsync()` — new method. `GalaTransferClient` refactored to share a `PostSignedAsync` helper between transfer and burn.
+  - `IWalletService.ValidateBurn()` and `SubmitBurnAsync()` — builds request, signs, submits, refreshes balances.
+  - New UI partial class `GalaChainWallet.Burn.cs` mirrors the transfer flow: burn button, burn dialog, `RequestBurn`, pending burn stash/consume for locked-wallet case, summary preview.
+  - New scene nodes: `BurnButton` (in Actions panel), `BurnDialog` with selected token label, quantity input, summary label.
+  - Added `BurnCompleted(quantity, symbol)` and `BurnFailed(error)` events to `GalaChainWallet` and forwarded through `WalletFacade`.
+  - Unlock flow now consumes pending burns (like pending transfers).
+  - Demo: added "Burn 5 GALA" button that calls `_walletFacade.RequestBurn("5", "GALA")`, demonstrating game-initiated burn flow.
+- **Scope note**: Burn is a player-signed operation — the player burns their own tokens with their own wallet key. This is in scope per the plugin's client-side boundary. Minting (which requires authority) remains out of scope.
+- **Files**: `GalaBurnTokensRequest.cs` (new), `BurnDraft.cs` (new), `BurnTokensPolicy.cs` (new), `GalaChainWallet.Burn.cs` (new), `GalaChainNetworkConfig.cs`, `GalaSigner.cs`, `DtoPolicyRegistry.cs`, `IGalaTransferClient.cs`, `GalaTransferClient.cs`, `IWalletService.cs`, `WalletService.cs`, `WalletFacade.cs`, `GalaChainWallet.cs`, `GalaChainWallet.WalletActions.cs`, `GalaChainWallet.tscn`, `WalletDemoGame.cs`, `WalletDemoGame.tscn`
+
 ---
 
 ## Known issues remaining

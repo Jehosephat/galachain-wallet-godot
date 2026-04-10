@@ -8,4 +8,5 @@ public interface IGalaChainClient
 {
 	Task<NetworkResult<List<TokenBalanceModel>>> FetchBalancesAsync(string ethAddress);
 	Task<NetworkResult<TransferPreviewResult>> DryRunTransferAsync(GalaTransferTokenRequest request);
+	Task<NetworkResult<TransferPreviewResult>> DryRunBurnAsync(GalaBurnTokensRequest request, string signerAddress);
 }

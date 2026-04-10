@@ -44,6 +44,14 @@ public partial class GalaChainWallet : Control
 	private Label _transferSummaryLabel = null!;
 	private TokenBalanceModel? _selectedTransferToken;
 
+	private Button _burnButton = null!;
+	private ConfirmationDialog _burnDialog = null!;
+	private Label _burnSelectedTokenLabel = null!;
+	private Label _burnQuantityLabel = null!;
+	private LineEdit _burnQuantityInput = null!;
+	private Label _burnSummaryLabel = null!;
+	private TokenBalanceModel? _selectedBurnToken;
+
 	private PendingPasswordAction _pendingPasswordAction = PendingPasswordAction.None;
 	private string _pendingImportPrivateKey = "";
 	private string _pendingMnemonic = "";
@@ -51,6 +59,9 @@ public partial class GalaChainWallet : Control
 	private string? _pendingTransferTo;
 	private string? _pendingTransferQuantity;
 	private string? _pendingTransferSymbol;
+
+	private string? _pendingBurnQuantity;
+	private string? _pendingBurnSymbol;
 
 	private const double IdleTimeoutSeconds = 300.0; // 5 minutes
 	private double _lastActivityTime;
@@ -65,6 +76,8 @@ public partial class GalaChainWallet : Control
 	public event Action? WalletLocked;
 	public event Action<string, string, string>? TransferCompleted;
 	public event Action<string>? TransferFailed;
+	public event Action<string, string>? BurnCompleted;
+	public event Action<string>? BurnFailed;
 	public event Action? BalancesRefreshed;
 
 	public void Initialize(IWalletService walletService)
@@ -109,6 +122,12 @@ public partial class GalaChainWallet : Control
 		_transferQuantityLabel = GetNode<Label>("%TransferQuantityLabel");
 		_transferQuantityInput = GetNode<LineEdit>("%TransferQuantityInput");
 		_transferSummaryLabel = GetNode<Label>("%TransferSummaryLabel");
+		_burnButton = GetNode<Button>("%BurnButton");
+		_burnDialog = GetNode<ConfirmationDialog>("%BurnDialog");
+		_burnSelectedTokenLabel = GetNode<Label>("%BurnSelectedTokenLabel");
+		_burnQuantityLabel = GetNode<Label>("%BurnQuantityLabel");
+		_burnQuantityInput = GetNode<LineEdit>("%BurnQuantityInput");
+		_burnSummaryLabel = GetNode<Label>("%BurnSummaryLabel");
 
 		_createWalletButton.Pressed += OnCreateWalletPressed;
 		_importWalletButton.Pressed += OnImportWalletPressed;
@@ -124,6 +143,9 @@ public partial class GalaChainWallet : Control
 		_transferDialog.Confirmed += OnTransferDialogConfirmed;
 		_transferToInput.TextChanged += OnTransferInputChanged;
 		_transferQuantityInput.TextChanged += OnTransferInputChanged;
+		_burnButton.Pressed += OnBurnPressed;
+		_burnDialog.Confirmed += OnBurnDialogConfirmed;
+		_burnQuantityInput.TextChanged += OnBurnInputChanged;
 
 		_copyPhraseButton.Pressed += OnCopyPhrasePressed;
 
@@ -131,6 +153,7 @@ public partial class GalaChainWallet : Control
 		_importPrivateKeyInput.TextSubmitted += _ => { _importPrivateKeyDialog.Hide(); OnImportPrivateKeyConfirmed(); };
 		_importMnemonicInput.TextSubmitted += _ => { _importMnemonicDialog.Hide(); OnImportMnemonicConfirmed(); };
 		_transferQuantityInput.TextSubmitted += _ => { _transferDialog.Hide(); OnTransferDialogConfirmed(); };
+		_burnQuantityInput.TextSubmitted += _ => { _burnDialog.Hide(); OnBurnDialogConfirmed(); };
 
 		_uiReady = true;
 		_lastActivityTime = Time.GetTicksMsec() / 1000.0;
@@ -185,6 +208,11 @@ public partial class GalaChainWallet : Control
 		{
 			_transferButton.Disabled = true;
 		}
+
+		if (_burnButton != null)
+		{
+			_burnButton.Disabled = true;
+		}
 	}
 
 	private bool EnsureService()
@@ -238,6 +266,11 @@ public partial class GalaChainWallet : Control
 		if (_transferButton != null)
 		{
 			_transferButton.Disabled = !hasWallet || !isUnlocked;
+		}
+
+		if (_burnButton != null)
+		{
+			_burnButton.Disabled = !hasWallet || !isUnlocked;
 		}
 
 		RefreshBalances();

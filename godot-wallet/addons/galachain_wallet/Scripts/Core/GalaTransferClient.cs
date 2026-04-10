@@ -43,13 +43,21 @@ public class GalaTransferClient : IGalaTransferClient
 
 	public async Task<NetworkResult<string>> TransferAsync(GalaTransferTokenRequest request, string walletAlias)
 	{
-		string json = JsonSerializer.Serialize(request);
+		return await PostSignedAsync(_config.TransferTokenUrl, JsonSerializer.Serialize(request));
+	}
 
+	public async Task<NetworkResult<string>> BurnTokensAsync(GalaBurnTokensRequest request)
+	{
+		return await PostSignedAsync(_config.BurnTokensUrl, JsonSerializer.Serialize(request));
+	}
+
+	private async Task<NetworkResult<string>> PostSignedAsync(string url, string json)
+	{
 		try
 		{
 			using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_config.WriteTimeoutSeconds));
 			using var content = new StringContent(json, Encoding.UTF8, "application/json");
-			using var httpRequest = new HttpRequestMessage(HttpMethod.Post, _config.TransferTokenUrl);
+			using var httpRequest = new HttpRequestMessage(HttpMethod.Post, url);
 			httpRequest.Content = content;
 
 			using var response = await Http.SendAsync(httpRequest, cts.Token);

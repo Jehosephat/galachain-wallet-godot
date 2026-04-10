@@ -107,19 +107,38 @@ public class GalaChainClient : IGalaChainClient
 
 	public async Task<NetworkResult<TransferPreviewResult>> DryRunTransferAsync(GalaTransferTokenRequest request)
 	{
+		var dto = new
+		{
+			request.from,
+			request.to,
+			request.tokenInstance,
+			request.quantity,
+			uniqueKey = $"dryrun-{Guid.NewGuid()}",
+			request.dtoExpiresAt
+		};
+
+		return await DryRunAsync("TransferToken", request.from, dto);
+	}
+
+	public async Task<NetworkResult<TransferPreviewResult>> DryRunBurnAsync(GalaBurnTokensRequest request, string signerAddress)
+	{
+		var dto = new
+		{
+			request.tokenInstances,
+			uniqueKey = $"dryrun-{Guid.NewGuid()}",
+			request.dtoExpiresAt
+		};
+
+		return await DryRunAsync("BurnTokens", signerAddress, dto);
+	}
+
+	private async Task<NetworkResult<TransferPreviewResult>> DryRunAsync(string method, string signerAddress, object dto)
+	{
 		var wrapper = new
 		{
-			method = "TransferToken",
-			signerAddress = request.from,
-			dto = new
-			{
-				request.from,
-				request.to,
-				request.tokenInstance,
-				request.quantity,
-				uniqueKey = $"dryrun-{Guid.NewGuid()}",
-				request.dtoExpiresAt
-			}
+			method,
+			signerAddress,
+			dto
 		};
 
 		string json = JsonSerializer.Serialize(wrapper);
@@ -147,7 +166,7 @@ public class GalaChainClient : IGalaChainClient
 
 			var inner = parsed.Data.Response;
 			bool success = parsed.Status == 1 && inner.Status == 1;
-			string fee = ExtractFeeFromWrites(parsed.Data.Writes, "TransferToken", request.from);
+			string fee = ExtractFeeFromWrites(parsed.Data.Writes, method, signerAddress);
 
 			var preview = new TransferPreviewResult
 			{

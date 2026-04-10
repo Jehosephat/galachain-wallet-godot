@@ -7,6 +7,7 @@ public partial class WalletDemoGame : Control
 	private Button _openWalletButton = null!;
 	private Button _closeWalletButton = null!;
 	private Button _makePurchaseButton = null!;
+	private Button _burnGalaButton = null!;
 	private Control _walletMount = null!;
 	private Label _gameStatusLabel = null!;
 	private Label _gameBalanceLabel = null!;
@@ -18,6 +19,7 @@ public partial class WalletDemoGame : Control
 		_openWalletButton = GetNode<Button>("%OpenWalletButton");
 		_closeWalletButton = GetNode<Button>("%CloseWalletButton");
 		_makePurchaseButton = GetNode<Button>("%MakePurchaseButton");
+		_burnGalaButton = GetNode<Button>("%BurnGalaButton");
 		_walletMount = GetNode<Control>("%WalletMount");
 		_gameStatusLabel = GetNode<Label>("%GameStatusLabel");
 		_gameBalanceLabel = GetNode<Label>("%GameBalanceLabel");
@@ -25,6 +27,7 @@ public partial class WalletDemoGame : Control
 		_openWalletButton.Pressed += OnOpenWalletPressed;
 		_closeWalletButton.Pressed += OnCloseWalletPressed;
 		_makePurchaseButton.Pressed += OnMakePurchasePressed;
+		_burnGalaButton.Pressed += OnBurnGalaPressed;
 
 		_walletFacade.WalletCreated += _ => UpdateStatus();
 		_walletFacade.WalletImported += _ => UpdateStatus();
@@ -38,6 +41,14 @@ public partial class WalletDemoGame : Control
 		_walletFacade.TransferFailed += err =>
 		{
 			GD.Print($"[Demo] Transfer failed: {err}");
+		};
+		_walletFacade.BurnCompleted += (qty, sym) =>
+		{
+			GD.Print($"[Demo] Burn completed: {qty} {sym}");
+		};
+		_walletFacade.BurnFailed += err =>
+		{
+			GD.Print($"[Demo] Burn failed: {err}");
 		};
 
 		UpdateStatus();
@@ -59,6 +70,13 @@ public partial class WalletDemoGame : Control
 	{
 		_walletFacade.OpenWallet(_walletMount);
 		_walletFacade.RequestTransfer("client|5f58d8641586e117c5e68834", "15", "GALA");
+		UpdateStatus();
+	}
+
+	private void OnBurnGalaPressed()
+	{
+		_walletFacade.OpenWallet(_walletMount);
+		_walletFacade.RequestBurn("5", "GALA");
 		UpdateStatus();
 	}
 
