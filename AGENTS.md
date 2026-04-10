@@ -4,6 +4,26 @@
 
 Embedded in-game GalaChain wallet built as a Godot 4.x C#/.NET module. Opinionated signer — only supports allowlisted operations (currently `TransferToken`), rejects everything else. Targets Windows desktop first with abstractions for cross-platform later.
 
+## Scope Boundary
+
+This plugin is **strictly client-side** and handles only operations the player themselves signs with their own wallet key:
+
+**In scope:**
+- Player wallet UI (create, import, unlock, lock)
+- Player key management and encrypted keystore
+- Balance display and refresh
+- Player-signed transfers (the player approves and signs each transaction)
+- Dry-run fee estimation for player transactions
+
+**Out of scope — belongs on a game backend server:**
+- Minting tokens to players (requires authority/mint allowance, which must never ship in client code)
+- Burning tokens on players' behalf
+- Granting rewards or airdrops
+- Any operation signed with a key other than the player's wallet
+- Any operation that requires permissions a player's wallet shouldn't have
+
+Game backends should talk to GalaChain directly using their own stack. This plugin does not provide shared SDK utilities for backend operations — if a game needs to mint rewards, the backend does that, and the client just calls `RefreshBalancesAsync()` afterward to pick up the new tokens.
+
 ## Key Documents
 
 - `godot-galachain-wallet-mvp-blueprint.md` — Design blueprint. All implementation decisions should reference this.

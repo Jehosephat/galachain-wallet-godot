@@ -13,6 +13,17 @@ The GalaChain Wallet is an in-game wallet module that lets players:
 
 Your game code interacts with the wallet through a single class (`WalletFacade`). The wallet handles all cryptography, signing, and GalaChain API communication internally. Your game never touches private keys.
 
+## What This Plugin Does NOT Do
+
+This plugin is strictly a **client-side player wallet**. It does not handle:
+
+- **Minting tokens to players** — this requires a key with mint authority, which must never ship in client code. Mint from your game backend and call `RefreshBalancesAsync()` on the client afterward to show the new tokens.
+- **Burning tokens on players' behalf** — same reason; authority keys belong on a backend.
+- **Granting rewards or airdrops** — do this server-side.
+- **Any operation signed with a key other than the player's wallet key** — if your game backend needs to sign GalaChain transactions, it should use its own stack, not this plugin.
+
+The rule of thumb: if the operation requires player approval, it belongs in this plugin. If it requires game authority, it belongs on your backend.
+
 ## Prerequisites
 
 - Godot 4.5+ with C#/.NET support enabled
