@@ -22,6 +22,8 @@ public class WalletFacade
 	public event Action<string>? TransferFailed;
 	public event Action<string, string>? BurnCompleted;
 	public event Action<string>? BurnFailed;
+	public event Action<string, string, string>? MessageSigned;
+	public event Action? MessageSignDeclined;
 	public event Action? BalancesRefreshed;
 
 	public WalletFacade(IWalletService? walletService = null)
@@ -97,6 +99,25 @@ public class WalletFacade
 		_galaChainWallet.RequestBurn(quantity, tokenSymbol);
 	}
 
+	/// <summary>
+	/// Asks the player to sign an arbitrary message (EIP-191 personal_sign).
+	/// Used for authentication challenges — the game server issues a message,
+	/// the player signs it, the server verifies the signature recovers to the
+	/// claimed address.
+	///
+	/// Subscribe to MessageSigned to receive the signature and address, or
+	/// MessageSignDeclined if the user cancels or the wallet is in a bad state.
+	/// </summary>
+	public void RequestSignMessage(string message)
+	{
+		if (_galaChainWallet == null)
+		{
+			return;
+		}
+
+		_galaChainWallet.RequestSignMessage(message);
+	}
+
 	private void SubscribeToWalletEvents(GalaChainWallet wallet)
 	{
 		wallet.WalletCreated += addr => WalletCreated?.Invoke(addr);
@@ -107,6 +128,8 @@ public class WalletFacade
 		wallet.TransferFailed += err => TransferFailed?.Invoke(err);
 		wallet.BurnCompleted += (qty, sym) => BurnCompleted?.Invoke(qty, sym);
 		wallet.BurnFailed += err => BurnFailed?.Invoke(err);
+		wallet.MessageSigned += (msg, sig, addr) => MessageSigned?.Invoke(msg, sig, addr);
+		wallet.MessageSignDeclined += () => MessageSignDeclined?.Invoke();
 		wallet.BalancesRefreshed += () => BalancesRefreshed?.Invoke();
 	}
 }

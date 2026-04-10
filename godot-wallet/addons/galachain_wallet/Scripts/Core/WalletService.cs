@@ -334,4 +334,15 @@ public class WalletService : IWalletService
 
 		return result;
 	}
+
+	public string SignMessage(string message)
+	{
+		if (!_state.HasWallet || !_state.IsUnlocked)
+			throw new InvalidOperationException("Wallet must be unlocked to sign a message.");
+
+		if (string.IsNullOrWhiteSpace(_state.PrivateKey))
+			throw new InvalidOperationException("Private key is not available in memory.");
+
+		return _galaSigner.SignMessage(message, _state.PrivateKey);
+	}
 }

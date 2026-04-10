@@ -52,6 +52,10 @@ public partial class GalaChainWallet : Control
 	private Label _burnSummaryLabel = null!;
 	private TokenBalanceModel? _selectedBurnToken;
 
+	private ConfirmationDialog _signMessageDialog = null!;
+	private RichTextLabel _signMessageContent = null!;
+	private string _pendingSignMessage = "";
+
 	private PendingPasswordAction _pendingPasswordAction = PendingPasswordAction.None;
 	private string _pendingImportPrivateKey = "";
 	private string _pendingMnemonic = "";
@@ -78,6 +82,8 @@ public partial class GalaChainWallet : Control
 	public event Action<string>? TransferFailed;
 	public event Action<string, string>? BurnCompleted;
 	public event Action<string>? BurnFailed;
+	public event Action<string, string, string>? MessageSigned;
+	public event Action? MessageSignDeclined;
 	public event Action? BalancesRefreshed;
 
 	public void Initialize(IWalletService walletService)
@@ -128,6 +134,8 @@ public partial class GalaChainWallet : Control
 		_burnQuantityLabel = GetNode<Label>("%BurnQuantityLabel");
 		_burnQuantityInput = GetNode<LineEdit>("%BurnQuantityInput");
 		_burnSummaryLabel = GetNode<Label>("%BurnSummaryLabel");
+		_signMessageDialog = GetNode<ConfirmationDialog>("%SignMessageDialog");
+		_signMessageContent = GetNode<RichTextLabel>("%SignMessageContent");
 
 		_createWalletButton.Pressed += OnCreateWalletPressed;
 		_importWalletButton.Pressed += OnImportWalletPressed;
@@ -146,6 +154,8 @@ public partial class GalaChainWallet : Control
 		_burnButton.Pressed += OnBurnPressed;
 		_burnDialog.Confirmed += OnBurnDialogConfirmed;
 		_burnQuantityInput.TextChanged += OnBurnInputChanged;
+		_signMessageDialog.Confirmed += OnSignMessageConfirmed;
+		_signMessageDialog.Canceled += OnSignMessageCanceled;
 
 		_copyPhraseButton.Pressed += OnCopyPhrasePressed;
 

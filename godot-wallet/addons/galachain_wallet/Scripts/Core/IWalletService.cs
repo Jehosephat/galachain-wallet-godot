@@ -24,4 +24,5 @@ public interface IWalletService
 	ValidationResult ValidateBurn(BurnDraft draft, decimal availableBalance);
 	Task<NetworkResult<TransferPreviewResult>> PreviewBurnAsync(BurnDraft draft);
 	Task<NetworkResult<string>> SubmitBurnAsync(BurnDraft draft);
+	string SignMessage(string message);
 }

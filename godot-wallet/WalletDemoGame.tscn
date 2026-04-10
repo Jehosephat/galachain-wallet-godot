@@ -43,6 +43,11 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Burn 5 GALA"
 
+[node name="LoginButton" type="Button" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Log In (Sign Message)"
+
 [node name="GameStatusLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=696915932]
 unique_name_in_owner = true
 layout_mode = 2

@@ -142,6 +142,7 @@ public partial class GalaChainWallet
 						BalancesRefreshed?.Invoke();
 						ConsumePendingTransfer();
 						ConsumePendingBurn();
+						ConsumePendingSignMessage();
 					}
 					break;
 

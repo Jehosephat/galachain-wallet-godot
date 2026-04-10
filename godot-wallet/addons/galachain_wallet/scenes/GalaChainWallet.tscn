@@ -324,3 +324,32 @@ placeholder_text = "Quantity"
 [node name="BurnSummaryLabel" type="Label" parent="BurnDialog/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
+
+[node name="SignMessageDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "Sign Message"
+ok_button_text = "Sign"
+size = Vector2i(520, 280)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SignMessageDialog"]
+offset_right = 500.0
+offset_bottom = 240.0
+theme_override_constants/separation = 8
+
+[node name="SignMessageHeaderLabel" type="Label" parent="SignMessageDialog/VBoxContainer"]
+layout_mode = 2
+text = "A game is asking you to sign the following message:"
+autowrap_mode = 2
+
+[node name="SignMessageWarningLabel" type="Label" parent="SignMessageDialog/VBoxContainer"]
+layout_mode = 2
+text = "Only sign messages you understand. This proves you control this wallet address."
+autowrap_mode = 2
+
+[node name="SignMessageContent" type="RichTextLabel" parent="SignMessageDialog/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 100)
+size_flags_vertical = 3
+bbcode_enabled = false
+selection_enabled = true

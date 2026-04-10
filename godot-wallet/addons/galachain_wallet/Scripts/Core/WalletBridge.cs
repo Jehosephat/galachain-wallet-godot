@@ -19,6 +19,10 @@ public partial class WalletBridge : Node
 	[Signal] public delegate void WalletLockedEventHandler();
 	[Signal] public delegate void TransferCompletedEventHandler(string toAddress, string quantity, string symbol);
 	[Signal] public delegate void TransferFailedEventHandler(string error);
+	[Signal] public delegate void BurnCompletedEventHandler(string quantity, string symbol);
+	[Signal] public delegate void BurnFailedEventHandler(string error);
+	[Signal] public delegate void MessageSignedEventHandler(string message, string signature, string address);
+	[Signal] public delegate void MessageSignDeclinedEventHandler();
 	[Signal] public delegate void BalancesRefreshedEventHandler();
 
 	public override void _Ready()
@@ -31,6 +35,10 @@ public partial class WalletBridge : Node
 		_facade.WalletLocked += () => EmitSignal(SignalName.WalletLocked);
 		_facade.TransferCompleted += (to, qty, sym) => EmitSignal(SignalName.TransferCompleted, to, qty, sym);
 		_facade.TransferFailed += err => EmitSignal(SignalName.TransferFailed, err);
+		_facade.BurnCompleted += (qty, sym) => EmitSignal(SignalName.BurnCompleted, qty, sym);
+		_facade.BurnFailed += err => EmitSignal(SignalName.BurnFailed, err);
+		_facade.MessageSigned += (msg, sig, addr) => EmitSignal(SignalName.MessageSigned, msg, sig, addr);
+		_facade.MessageSignDeclined += () => EmitSignal(SignalName.MessageSignDeclined);
 		_facade.BalancesRefreshed += () => EmitSignal(SignalName.BalancesRefreshed);
 	}
 
@@ -62,6 +70,16 @@ public partial class WalletBridge : Node
 	public void RequestTransfer(string toAddress, string quantity, string tokenSymbol)
 	{
 		_facade.RequestTransfer(toAddress, quantity, tokenSymbol);
+	}
+
+	public void RequestBurn(string quantity, string tokenSymbol)
+	{
+		_facade.RequestBurn(quantity, tokenSymbol);
+	}
+
+	public void RequestSignMessage(string message)
+	{
+		_facade.RequestSignMessage(message);
 	}
 
 	/// <summary>

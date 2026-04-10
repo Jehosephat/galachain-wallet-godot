@@ -35,6 +35,19 @@ public class GalaSigner
 		request.signature = SignPayload(payloadToSign, privateKey);
 	}
 
+	/// <summary>
+	/// Signs an arbitrary message using EIP-191 personal_sign format.
+	/// The message is prefixed with "\x19Ethereum Signed Message:\n{length}" before hashing,
+	/// which prevents the signature from being replayed as a transaction.
+	/// Used for authentication challenges (wallet login).
+	/// </summary>
+	public string SignMessage(string message, string privateKey)
+	{
+		var signer = new EthereumMessageSigner();
+		var key = new EthECKey(privateKey);
+		return signer.EncodeUTF8AndSign(message, key);
+	}
+
 	private static string SignPayload(object payload, string privateKey)
 	{
 		string canonicalJson = GalaCanonicalJson.Serialize(payload);

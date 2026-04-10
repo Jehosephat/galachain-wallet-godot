@@ -8,6 +8,7 @@ public partial class WalletDemoGame : Control
 	private Button _closeWalletButton = null!;
 	private Button _makePurchaseButton = null!;
 	private Button _burnGalaButton = null!;
+	private Button _loginButton = null!;
 	private Control _walletMount = null!;
 	private Label _gameStatusLabel = null!;
 	private Label _gameBalanceLabel = null!;
@@ -20,6 +21,7 @@ public partial class WalletDemoGame : Control
 		_closeWalletButton = GetNode<Button>("%CloseWalletButton");
 		_makePurchaseButton = GetNode<Button>("%MakePurchaseButton");
 		_burnGalaButton = GetNode<Button>("%BurnGalaButton");
+		_loginButton = GetNode<Button>("%LoginButton");
 		_walletMount = GetNode<Control>("%WalletMount");
 		_gameStatusLabel = GetNode<Label>("%GameStatusLabel");
 		_gameBalanceLabel = GetNode<Label>("%GameBalanceLabel");
@@ -28,6 +30,7 @@ public partial class WalletDemoGame : Control
 		_closeWalletButton.Pressed += OnCloseWalletPressed;
 		_makePurchaseButton.Pressed += OnMakePurchasePressed;
 		_burnGalaButton.Pressed += OnBurnGalaPressed;
+		_loginButton.Pressed += OnLoginPressed;
 
 		_walletFacade.WalletCreated += _ => UpdateStatus();
 		_walletFacade.WalletImported += _ => UpdateStatus();
@@ -49,6 +52,17 @@ public partial class WalletDemoGame : Control
 		_walletFacade.BurnFailed += err =>
 		{
 			GD.Print($"[Demo] Burn failed: {err}");
+		};
+		_walletFacade.MessageSigned += (msg, sig, addr) =>
+		{
+			GD.Print($"[Demo] Login signature received");
+			GD.Print($"  address:   {addr}");
+			GD.Print($"  signature: {sig}");
+			GD.Print("  (Send these to your game server, which verifies the signature recovers to the address.)");
+		};
+		_walletFacade.MessageSignDeclined += () =>
+		{
+			GD.Print("[Demo] Login declined by user.");
 		};
 
 		UpdateStatus();
@@ -77,6 +91,24 @@ public partial class WalletDemoGame : Control
 	{
 		_walletFacade.OpenWallet(_walletMount);
 		_walletFacade.RequestBurn("5", "GALA");
+		UpdateStatus();
+	}
+
+	private void OnLoginPressed()
+	{
+		_walletFacade.OpenWallet(_walletMount);
+
+		// A real game server would generate this nonce and timestamp and give it
+		// to the client. The server then verifies the returned signature recovers
+		// to the expected address.
+		string nonce = System.Guid.NewGuid().ToString("N").Substring(0, 16);
+		string timestamp = System.DateTime.UtcNow.ToString("o");
+		string message =
+			"Sign in to WalletDemoGame\n" +
+			$"Nonce: {nonce}\n" +
+			$"Timestamp: {timestamp}";
+
+		_walletFacade.RequestSignMessage(message);
 		UpdateStatus();
 	}
 
