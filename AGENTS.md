@@ -97,7 +97,27 @@ Transfer validation lives in `TransferTokenPolicy`, not scattered in UI code. Th
 `WalletService.BuildTransferRequest()` is the single place that constructs `GalaTransferTokenRequest`. It sets `dtoExpiresAt` (3-minute window), generates a fresh `uniqueKey`, and resolves the `from` address. The signer then signs this DTO.
 
 ### Dry-run for fee estimation
-The dry-run uses the GalaChain `/DryRun` endpoint. The request wraps the transfer DTO inside a `dto` property alongside `method` and `signerAddress` at the top level. No signature required. Fees are extracted from the `writes` dictionary by scanning for `GCFR` key entries.
+Dry-run simulates a chaincode call without committing. Use it for fee estimation and pre-flight validation. Read-only — no uniqueKey consumed, no fees paid.
+
+**Request shape** — `POST /api/{channel}/{contract}/DryRun`:
+```json
+{
+  "method": "TransferToken",
+  "signerAddress": "eth|<address>",
+  "dto": { ...operation fields, including uniqueKey and dtoExpiresAt... }
+}
+```
+The operation fields MUST be nested inside `dto`, not flattened to the top level. Don't include `signature`/`trace`/`multisig`/`prefix`. Use a distinct `dryrun-<guid>` uniqueKey (separate from submission keys).
+
+**Two Status checks** — both must equal 1 for success:
+- `parsed.Status` — did the DryRun call itself succeed?
+- `parsed.Data.response.Status` — did the simulated operation succeed? Surface `response.Message` on failure.
+
+**Fee extraction** — fees are in `Data.writes`, not a dedicated field. Scan keys for `"GCFR"`, parse each matching value as JSON with `JsonDocument` (not `Dictionary<string, string>` — values contain mixed types like `status: 2` integer), read the `quantity` field, sum them. Zero GCFR entries = no fee.
+
+**Implementation pattern** — share a private `DryRunAsync(method, signerAddress, dto)` helper across operation-specific methods (`DryRunTransferAsync`, `DryRunBurnAsync`, etc.). Each per-op method builds its own `dto` shape; the helper handles the wrapper, HTTP call, dual-Status check, and fee extraction.
+
+**UX notes** — run on input change in dialogs with an "Estimated fee: loading..." placeholder, then update in place. Don't gate the OK button on dry-run completion — it's informational, not a security check. Always re-validate at submission time. Use a 15-second read timeout; dry runs should be quick.
 
 ### Wallet events for game code
 Events originate on `GalaChainWallet` (the UI class, where actions happen) and are forwarded through `WalletFacade` for game code to consume. This keeps the dependency one-way: facade -> UI.
