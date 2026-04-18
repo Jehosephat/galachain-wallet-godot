@@ -248,6 +248,13 @@ Six fixes applied in one pass:
 - **Files**: `GalaFetchBalancesResponse.cs`, `GalaBalanceDto.cs`, `GalaChainNetworkConfig.cs`, `TokenBalanceModel.cs`, `GalaChainClient.cs`, `GalaChainWallet.cs`, `WalletBridge.cs`
 - **Known issue**: .NET `HttpClient` has intermittent TLS handshake failures with `tokens.gala.games` and `static.gala.games` CDNs in the Godot runtime. Retries mitigate this but some icons may still fail to load on a given run. A future fix would be to use Godot's native `HttpRequest` node for icon downloads if the TLS issue can be resolved there.
 
+## 2026-04-18
+
+### Expose `RefreshBalances()` on WalletBridge for GDScript
+- **Problem**: `WalletFacade.RefreshBalancesAsync()` had no GDScript passthrough on `WalletBridge`. GDScript games couldn't trigger a balance refresh — only the wallet UI's internal refresh button could. This is needed for games that mint/reward server-side and want the client to pick up the new balances.
+- **Change**: Added `RefreshBalances()` fire-and-forget method on `WalletBridge` that calls `_facade.RefreshBalancesAsync()`. GDScript callers subscribe to the existing `BalancesRefreshed` signal for completion.
+- **Files**: `Scripts/Core/WalletBridge.cs`, `INTEGRATION_GUIDE.md` (GDScript API reference updated).
+
 ## 2026-04-10
 
 ### Burn support

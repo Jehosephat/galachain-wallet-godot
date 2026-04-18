@@ -462,6 +462,7 @@ func _on_transfer_completed(to: String, quantity: String, symbol: String):
 | `IsUnlocked()` | `bool` | Whether the wallet is unlocked |
 | `GetCurrentAddress()` | `String` | The wallet's `eth\|` address |
 | `RequestTransfer(to, qty, symbol)` | `void` | Opens pre-filled transfer dialog |
+| `RefreshBalances()` | `void` | Fetches latest balances. Fire-and-forget — listen for `BalancesRefreshed`. |
 | `GetBalances()` | `Array[Dictionary]` | All token balances |
 | `GetGalaBalance()` | `String` | GALA balance as a formatted string |
 

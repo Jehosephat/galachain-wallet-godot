@@ -122,6 +122,16 @@ public partial class WalletBridge : Node
 	}
 
 	/// <summary>
+	/// Fetches latest balances from GalaChain. Fire-and-forget for GDScript —
+	/// subscribe to the BalancesRefreshed signal to react when the refresh completes.
+	/// Useful after a backend mint or reward grant to pick up new tokens.
+	/// </summary>
+	public void RefreshBalances()
+	{
+		_ = _facade.RefreshBalancesAsync();
+	}
+
+	/// <summary>
 	/// Returns balances as an Array of Dictionaries for GDScript compatibility.
 	/// Each dictionary has: symbol, display_amount, available_amount, collection,
 	/// category, type, additional_key, instance.
