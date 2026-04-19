@@ -333,16 +333,16 @@ layout_mode = 2
 [node name="GrantAllowanceDialog" type="ConfirmationDialog" parent="."]
 unique_name_in_owner = true
 title = "Grant Allowance"
-size = Vector2i(540, 320)
+size = Vector2i(520, 240)
 
 [node name="VBoxContainer" type="VBoxContainer" parent="GrantAllowanceDialog"]
-offset_right = 520.0
-offset_bottom = 280.0
-theme_override_constants/separation = 8
+offset_right = 500.0
+offset_bottom = 200.0
+theme_override_constants/separation = 6
 
 [node name="GrantAllowanceTitleLabel" type="Label" parent="GrantAllowanceDialog/VBoxContainer"]
 layout_mode = 2
-text = "Grant an allowance on a token you own. The spender will be able to use that token on your behalf up to the quantity granted."
+text = "Let another user spend or burn this token on your behalf."
 autowrap_mode = 2
 
 [node name="GrantAllowanceSelectedTokenLabel" type="Label" parent="GrantAllowanceDialog/VBoxContainer"]

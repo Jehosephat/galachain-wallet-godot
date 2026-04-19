@@ -1,0 +1,15 @@
+{
+    "from": "eth|D1499B10A0e1F4912FD1d771b183DfDfBDF766DC",
+    "to": "eth|4A8A8b21aff9bA6a101557afF488d65cF5496cA1",
+    "tokenInstance": {
+        "collection": "GALA",
+        "category": "Unit",
+        "type": "none",
+        "additionalKey": "none",
+        "instance": "0"
+    },
+    "quantity": "5",
+    "uniqueKey": "demo-backend-3dd2f699-e756-4eef-ad08-7f49f866e451",
+    "dtoExpiresAt": 1776612646568,
+    "signature": "0x9b55b72fe2599d6dff3729ad838e068ced1f736c6ca9e2e7e0aa849b0bca63aa22fa4e8acdbc746a2c74d2af3d43453a282d999e6b30aecd7aae17ce305cb5121b"
+}

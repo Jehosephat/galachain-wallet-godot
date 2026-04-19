@@ -248,6 +248,18 @@ Six fixes applied in one pass:
 - **Files**: `GalaFetchBalancesResponse.cs`, `GalaBalanceDto.cs`, `GalaChainNetworkConfig.cs`, `TokenBalanceModel.cs`, `GalaChainClient.cs`, `GalaChainWallet.cs`, `WalletBridge.cs`
 - **Known issue**: .NET `HttpClient` has intermittent TLS handshake failures with `tokens.gala.games` and `static.gala.games` CDNs in the Godot runtime. Retries mitigate this but some icons may still fail to load on a given run. A future fix would be to use Godot's native `HttpRequest` node for icon downloads if the TLS issue can be resolved there.
 
+## 2026-04-19
+
+### Demo: spender-signed transfer that uses a granted allowance
+- **Problem**: The demo had no illustration of how a game backend actually *uses* an allowance after it's granted. A stakeholder using the plugin needed to see the player-free spend flow end-to-end.
+- **Changes**:
+  - `WalletDemoGame` now generates a throwaway secp256k1 "backend" key on startup (`EthECKey.GenerateKey()`) and logs its eth address. This key stands in for the game backend's signing identity. For real on-chain success the key would need to correspond to `client|5f58d8641586e117c5e68834` (or whichever GalaChain identity was granted the allowance).
+  - New "Spend Allowance: Send 5 GALA (no prompt)" button. Handler builds a `GalaTransferTokenRequest` with `from=<player alias>`, `to=client|5f58d8641586e117c5e68834`, signs it with the backend's key (NOT the player's), and posts it via `new GalaTransferClient(_networkConfig)`. No wallet unlock or password prompt.
+  - Demo now tracks the current `GalaChainNetworkConfig` in a field so the backend transfer client uses the same mainnet/testnet as the wallet UI.
+  - Existing `OnGrantAllowancePressed` now references the same `DemoBackendIdentity` constant so the grant-target and spend-signer stay conceptually linked.
+- **Scope note**: The spend flow deliberately bypasses `WalletFacade` because it's a *backend* operation — signed with a key the addon doesn't hold. This is the kind of thing AGENTS.md points to when it says "the plugin does not provide shared SDK utilities for backend operations." The demo illustrates the correct separation: the addon handles player-signed ops, the demo (standing in for a server) handles backend-signed ops using its own key.
+- **Files**: `WalletDemoGame.cs`, `WalletDemoGame.tscn`.
+
 ## 2026-04-18
 
 ### GrantAllowance support (Transfer and Burn allowances)

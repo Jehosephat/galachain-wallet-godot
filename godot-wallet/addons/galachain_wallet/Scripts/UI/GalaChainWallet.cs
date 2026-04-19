@@ -280,6 +280,17 @@ public partial class GalaChainWallet : Control
 		return false;
 	}
 
+	/// <summary>
+	/// Called by WalletFacade after an external refresh (e.g. a backend-signed
+	/// transfer updates service state). Re-renders the balances list and fires
+	/// the BalancesRefreshed event so game code can react.
+	/// </summary>
+	public void NotifyBalancesRefreshed()
+	{
+		RefreshUi();
+		BalancesRefreshed?.Invoke();
+	}
+
 	private void RefreshUi()
 	{
 		if (!_uiReady)

@@ -5,3 +5,8 @@
 # .NET build artifacts
 bin/
 obj/
+
+# Local demo secrets — backend private key and identity for the allowance flow.
+# Template is WalletDemoGame.LocalSecrets.cs.example (tracked). The real file
+# must NEVER be committed because it contains a private key.
+WalletDemoGame.LocalSecrets.cs

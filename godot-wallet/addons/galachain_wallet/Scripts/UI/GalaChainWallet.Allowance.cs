@@ -153,7 +153,7 @@ public partial class GalaChainWallet
 
 		UpdateGrantAllowanceSummary();
 
-		_grantAllowanceDialog.PopupCentered(new Vector2I(540, 300));
+		_grantAllowanceDialog.PopupCentered(new Vector2I(520, 240));
 	}
 
 	private static string FormatExpiresInput(long expiresUnixMs)
@@ -185,18 +185,21 @@ public partial class GalaChainWallet
 			return;
 		}
 
+		_grantAllowanceSummaryLabel.Text = BuildGrantAllowanceSummary(draft, "loading...");
+		RunGrantAllowanceDryRunPreview(draft);
+	}
+
+	private static string BuildGrantAllowanceSummary(GrantAllowanceDraft draft, string feeDisplay)
+	{
 		var spender = draft.Spenders[0];
 		string expiresText = draft.ExpiresUnixMs == 0
 			? "never"
-			: DateTimeOffset.FromUnixTimeMilliseconds(draft.ExpiresUnixMs).ToString("yyyy-MM-dd HH:mm 'UTC'");
+			: DateTimeOffset.FromUnixTimeMilliseconds(draft.ExpiresUnixMs).ToString("yyyy-MM-dd 'UTC'");
 
-		_grantAllowanceSummaryLabel.Text =
-			$"You are about to grant {draft.AllowanceType} allowance of " +
-			$"{spender.Quantity} {draft.DisplaySymbol} to {spender.User}\n" +
-			$"Expires: {expiresText}\n" +
-			$"Estimated fee: loading...";
-
-		RunGrantAllowanceDryRunPreview(draft);
+		return
+			$"Grant {spender.Quantity} {draft.DisplaySymbol} {draft.AllowanceType} allowance to:\n" +
+			$"{spender.User}\n" +
+			$"Expires {expiresText} · Fee: {feeDisplay}";
 	}
 
 	private async void RunGrantAllowanceDryRunPreview(GrantAllowanceDraft draft)
@@ -227,16 +230,7 @@ public partial class GalaChainWallet
 				: "None";
 		}
 
-		var spender = draft.Spenders[0];
-		string expiresText = draft.ExpiresUnixMs == 0
-			? "never"
-			: DateTimeOffset.FromUnixTimeMilliseconds(draft.ExpiresUnixMs).ToString("yyyy-MM-dd HH:mm 'UTC'");
-
-		_grantAllowanceSummaryLabel.Text =
-			$"You are about to grant {draft.AllowanceType} allowance of " +
-			$"{spender.Quantity} {draft.DisplaySymbol} to {spender.User}\n" +
-			$"Expires: {expiresText}\n" +
-			$"Estimated fee: {feeDisplay}";
+		_grantAllowanceSummaryLabel.Text = BuildGrantAllowanceSummary(draft, feeDisplay);
 	}
 
 	private async void OnGrantAllowanceDialogConfirmed()

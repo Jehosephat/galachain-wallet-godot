@@ -186,6 +186,13 @@ Mainnet is the default. Games can target testnet or a custom gateway by providin
 - Tests cover: canonical JSON serializer, secp256k1 signer, AES-GCM crypto service
 - The `Tests/` directory is NOT part of the plugin distribution
 
+### Demo allowance flow — backend secrets
+The Grant Allowance / Spend Allowance buttons in `WalletDemoGame` need a backend signing identity (private key + on-chain alias). These are intentionally empty in the committed `WalletDemoGame.cs`.
+
+To test the allowance flow: copy `godot-wallet/WalletDemoGame.LocalSecrets.cs.example` to `WalletDemoGame.LocalSecrets.cs` in the same directory and fill in the values. That filename is in `.gitignore` so the key can never be committed. If the secrets aren't configured, the two allowance buttons disable themselves at startup and the rest of the demo runs normally.
+
+**Never paste a private key directly into `WalletDemoGame.cs`** — it's tracked in git.
+
 ## Decisions and Deferrals
 
 - **`dtoOperation`**: Deferred — GalaChain Gateway doesn't support it. Revisit if GalaChain adds validation.

@@ -95,6 +95,18 @@ public class WalletFacade
 	public async Task RefreshBalancesAsync()
 	{
 		await _walletService.RefreshBalancesAsync();
+
+		if (_galaChainWallet != null)
+		{
+			// Wallet UI is live — tell it to re-render; it fires BalancesRefreshed,
+			// which forwards through SubscribeToWalletEvents to our event.
+			_galaChainWallet.NotifyBalancesRefreshed();
+		}
+		else
+		{
+			// No UI subscribed yet — notify game code directly.
+			BalancesRefreshed?.Invoke();
+		}
 	}
 
 	public void RequestTransfer(string toAddress, string quantity, string tokenSymbol)
