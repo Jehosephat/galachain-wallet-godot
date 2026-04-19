@@ -335,6 +335,90 @@ public class WalletService : IWalletService
 		return result;
 	}
 
+	public ValidationResult ValidateGrantAllowance(GrantAllowanceDraft draft, decimal availableBalance)
+	{
+		if (draft.Spenders.Count == 0)
+			return ValidationResult.Fail("At least one spender is required.");
+
+		foreach (var spender in draft.Spenders)
+		{
+			var context = new TransactionContext
+			{
+				FromAddress = ToGalaAlias(_state.Address),
+				ToAddress = spender.User,
+				Quantity = spender.Quantity,
+				AvailableBalance = availableBalance,
+				AllowanceType = (int)draft.AllowanceType,
+				ExpiresUnixMs = draft.ExpiresUnixMs
+			};
+
+			var result = _policyRegistry.Validate("GrantAllowance", context);
+			if (!result.IsValid)
+				return result;
+		}
+
+		return ValidationResult.Ok();
+	}
+
+	private GalaGrantAllowanceRequest BuildGrantAllowanceRequest(GrantAllowanceDraft draft)
+	{
+		long expiresAt = DateTimeOffset.UtcNow.AddMinutes(3).ToUnixTimeMilliseconds();
+
+		var quantities = new List<GrantAllowanceQuantity>();
+		foreach (var spender in draft.Spenders)
+		{
+			quantities.Add(new GrantAllowanceQuantity
+			{
+				user = spender.User,
+				quantity = spender.Quantity
+			});
+		}
+
+		// Default uses to the quantity — a common and permissive default that
+		// avoids under-granting when the game doesn't care about usage limits.
+		string uses = !string.IsNullOrWhiteSpace(draft.Uses)
+			? draft.Uses
+			: (draft.Spenders.Count > 0 ? draft.Spenders[0].Quantity : "1");
+
+		return new GalaGrantAllowanceRequest
+		{
+			allowanceType = (int)draft.AllowanceType,
+			dtoExpiresAt = expiresAt,
+			expires = draft.ExpiresUnixMs,
+			quantities = quantities,
+			tokenInstance = draft.TokenInstance,
+			uniqueKey = $"godot-wallet-{System.Guid.NewGuid()}",
+			uses = uses
+		};
+	}
+
+	public async Task<NetworkResult<TransferPreviewResult>> PreviewGrantAllowanceAsync(GrantAllowanceDraft draft)
+	{
+		if (!_state.HasWallet || !_state.IsUnlocked)
+			return NetworkResult<TransferPreviewResult>.Rejected("Wallet must be unlocked to preview allowance grant.");
+
+		var request = BuildGrantAllowanceRequest(draft);
+		return await _galaChainClient.DryRunGrantAllowanceAsync(request, ToGalaAlias(_state.Address));
+	}
+
+	public async Task<NetworkResult<string>> SubmitGrantAllowanceAsync(GrantAllowanceDraft draft)
+	{
+		if (!_state.HasWallet || !_state.IsUnlocked)
+			return NetworkResult<string>.Rejected("Wallet must be unlocked to grant an allowance.");
+
+		if (string.IsNullOrWhiteSpace(_state.PrivateKey))
+			return NetworkResult<string>.Rejected("Private key is not available in memory.");
+
+		var request = BuildGrantAllowanceRequest(draft);
+		_galaSigner.SignGrantAllowance(request, _state.PrivateKey);
+
+		var result = await _galaTransferClient.GrantAllowanceAsync(request);
+		if (result.IsSuccess)
+			await RefreshBalancesAsync();
+
+		return result;
+	}
+
 	public string SignMessage(string message)
 	{
 		if (!_state.HasWallet || !_state.IsUnlocked)

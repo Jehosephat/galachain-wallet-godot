@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Embedded in-game GalaChain wallet built as a Godot 4.x C#/.NET module. Opinionated signer — only supports allowlisted operations (currently `TransferToken`), rejects everything else. Targets Windows desktop first with abstractions for cross-platform later.
+Embedded in-game GalaChain wallet built as a Godot 4.x C#/.NET module. Opinionated signer — only supports allowlisted operations (`TransferToken`, `BurnTokens`, `GrantAllowance` restricted to Transfer/Burn types), rejects everything else. Targets Windows desktop first with abstractions for cross-platform later.
 
 ## Scope Boundary
 
@@ -12,7 +12,8 @@ This plugin is **strictly client-side** and handles only operations the player t
 - Player wallet UI (create, import, unlock, lock)
 - Player key management and encrypted keystore
 - Balance display and refresh
-- Player-signed transfers (the player approves and signs each transaction)
+- Player-signed transfers, burns, and allowance grants (Transfer/Burn types)
+- EIP-191 message signing for wallet login / auth challenges
 - Dry-run fee estimation for player transactions
 
 **Out of scope — belongs on a game backend server:**
@@ -137,6 +138,12 @@ Events originate on `GalaChainWallet` (the UI class, where actions happen) and a
 | `WalletLocked` | (none) | After manual lock or auto-lock |
 | `TransferCompleted` | `string to, string qty, string symbol` | After successful transfer submission |
 | `TransferFailed` | `string error` | After failed transfer |
+| `BurnCompleted` | `string qty, string symbol` | After successful burn submission |
+| `BurnFailed` | `string error` | After failed burn |
+| `AllowanceGranted` | `string spender, string qty, string symbol, string allowanceType` | After successful GrantAllowance. `allowanceType` is `"Transfer"` or `"Burn"`. |
+| `AllowanceGrantFailed` | `string error` | After failed GrantAllowance |
+| `MessageSigned` | `string message, string signature, string address` | After a successful EIP-191 sign |
+| `MessageSignDeclined` | (none) | Player cancelled a sign-message request |
 | `BalancesRefreshed` | (none) | After balances are updated (any trigger) |
 
 **Game code usage:**

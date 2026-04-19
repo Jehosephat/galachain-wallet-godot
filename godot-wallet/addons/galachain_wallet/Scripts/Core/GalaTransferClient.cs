@@ -51,6 +51,11 @@ public class GalaTransferClient : IGalaTransferClient
 		return await PostSignedAsync(_config.BurnTokensUrl, JsonSerializer.Serialize(request));
 	}
 
+	public async Task<NetworkResult<string>> GrantAllowanceAsync(GalaGrantAllowanceRequest request)
+	{
+		return await PostSignedAsync(_config.GrantAllowanceUrl, JsonSerializer.Serialize(request));
+	}
+
 	private async Task<NetworkResult<string>> PostSignedAsync(string url, string json)
 	{
 		try

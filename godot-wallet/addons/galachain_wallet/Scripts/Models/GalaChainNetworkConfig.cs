@@ -16,6 +16,7 @@ public class GalaChainNetworkConfig
 	public string TransferTokenUrl => $"{ApiBaseUrl}/{Channel}/{Contract}/TransferToken";
 	public string DryRunUrl => $"{ApiBaseUrl}/{Channel}/{Contract}/DryRun";
 	public string BurnTokensUrl => $"{ApiBaseUrl}/{Channel}/{Contract}/BurnTokens";
+	public string GrantAllowanceUrl => $"{ApiBaseUrl}/{Channel}/{Contract}/GrantAllowance";
 
 	/// <summary>Default GalaChain mainnet configuration.</summary>
 	public static GalaChainNetworkConfig Mainnet() => new()

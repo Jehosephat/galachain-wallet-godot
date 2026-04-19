@@ -21,6 +21,8 @@ public partial class WalletBridge : Node
 	[Signal] public delegate void TransferFailedEventHandler(string error);
 	[Signal] public delegate void BurnCompletedEventHandler(string quantity, string symbol);
 	[Signal] public delegate void BurnFailedEventHandler(string error);
+	[Signal] public delegate void AllowanceGrantedEventHandler(string spender, string quantity, string symbol, string allowanceType);
+	[Signal] public delegate void AllowanceGrantFailedEventHandler(string error);
 	[Signal] public delegate void MessageSignedEventHandler(string message, string signature, string address);
 	[Signal] public delegate void MessageSignDeclinedEventHandler();
 	[Signal] public delegate void BalancesRefreshedEventHandler();
@@ -42,6 +44,8 @@ public partial class WalletBridge : Node
 		_facade.TransferFailed += err => EmitSignal(SignalName.TransferFailed, err);
 		_facade.BurnCompleted += (qty, sym) => EmitSignal(SignalName.BurnCompleted, qty, sym);
 		_facade.BurnFailed += err => EmitSignal(SignalName.BurnFailed, err);
+		_facade.AllowanceGranted += (spender, qty, sym, type) => EmitSignal(SignalName.AllowanceGranted, spender, qty, sym, type);
+		_facade.AllowanceGrantFailed += err => EmitSignal(SignalName.AllowanceGrantFailed, err);
 		_facade.MessageSigned += (msg, sig, addr) => EmitSignal(SignalName.MessageSigned, msg, sig, addr);
 		_facade.MessageSignDeclined += () => EmitSignal(SignalName.MessageSignDeclined);
 		_facade.BalancesRefreshed += () => EmitSignal(SignalName.BalancesRefreshed);
@@ -114,6 +118,22 @@ public partial class WalletBridge : Node
 	public void RequestBurn(string quantity, string tokenSymbol)
 	{
 		_facade.RequestBurn(quantity, tokenSymbol);
+	}
+
+	/// <summary>Allowance type code for a transfer allowance (granter's tokens can be moved by the spender).</summary>
+	public const int ALLOWANCE_TYPE_TRANSFER = (int)AllowanceType.Transfer;
+	/// <summary>Allowance type code for a burn allowance (granter's tokens can be burned by the spender).</summary>
+	public const int ALLOWANCE_TYPE_BURN = (int)AllowanceType.Burn;
+
+	/// <summary>
+	/// Asks the player to grant a Transfer or Burn allowance to the given spender.
+	/// Pass ALLOWANCE_TYPE_TRANSFER or ALLOWANCE_TYPE_BURN for allowanceType.
+	/// expiresInDays = 0 means the allowance never expires (subject to the spender's uses limit).
+	/// Listen for the AllowanceGranted or AllowanceGrantFailed signal.
+	/// </summary>
+	public void RequestGrantAllowance(string spender, string quantity, string tokenSymbol, int allowanceType, int expiresInDays = 0)
+	{
+		_facade.RequestGrantAllowance(spender, quantity, tokenSymbol, (AllowanceType)allowanceType, expiresInDays);
 	}
 
 	public void RequestSignMessage(string message)

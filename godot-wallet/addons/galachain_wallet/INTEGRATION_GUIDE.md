@@ -358,6 +358,9 @@ Wallet.UseCustomNetwork("https://my-gateway/api", "my-channel", "my-contract")
 | `GetBalances()` | `List<TokenBalanceModel>` | Returns the current in-memory balance list. |
 | `RefreshBalancesAsync()` | `Task` | Fetches latest balances from GalaChain. |
 | `RequestTransfer(to, quantity, symbol)` | `void` | Opens a pre-filled transfer dialog. Auto-prompts unlock if needed. |
+| `RequestBurn(quantity, symbol)` | `void` | Opens a pre-filled burn confirmation dialog. Auto-prompts unlock if needed. |
+| `RequestGrantAllowance(spender, quantity, symbol, type, expiresInDays)` | `void` | Opens a pre-filled allowance grant dialog. `type` is `AllowanceType.Transfer` or `AllowanceType.Burn`; `expiresInDays = 0` means never expires. |
+| `RequestSignMessage(message)` | `void` | Opens an EIP-191 sign confirmation dialog. Used for wallet login. |
 
 ### GalaChainNetworkConfig
 
@@ -462,6 +465,9 @@ func _on_transfer_completed(to: String, quantity: String, symbol: String):
 | `IsUnlocked()` | `bool` | Whether the wallet is unlocked |
 | `GetCurrentAddress()` | `String` | The wallet's `eth\|` address |
 | `RequestTransfer(to, qty, symbol)` | `void` | Opens pre-filled transfer dialog |
+| `RequestBurn(qty, symbol)` | `void` | Opens pre-filled burn dialog |
+| `RequestGrantAllowance(spender, qty, symbol, allowanceType, expiresInDays)` | `void` | Opens pre-filled allowance grant dialog. Use `Wallet.ALLOWANCE_TYPE_TRANSFER` or `Wallet.ALLOWANCE_TYPE_BURN` for `allowanceType`. `expiresInDays = 0` means never expires. |
+| `RequestSignMessage(message)` | `void` | Opens EIP-191 sign dialog for wallet login |
 | `RefreshBalances()` | `void` | Fetches latest balances. Fire-and-forget — listen for `BalancesRefreshed`. |
 | `GetBalances()` | `Array[Dictionary]` | All token balances |
 | `GetGalaBalance()` | `String` | GALA balance as a formatted string |
@@ -476,6 +482,12 @@ func _on_transfer_completed(to: String, quantity: String, symbol: String):
 | `WalletLocked` | (none) | After lock or auto-lock |
 | `TransferCompleted` | `to: String, qty: String, symbol: String` | After successful transfer |
 | `TransferFailed` | `error: String` | After failed transfer |
+| `BurnCompleted` | `qty: String, symbol: String` | After successful burn |
+| `BurnFailed` | `error: String` | After failed burn |
+| `AllowanceGranted` | `spender: String, qty: String, symbol: String, allowanceType: String` | After successful allowance grant. `allowanceType` is `"Transfer"` or `"Burn"`. |
+| `AllowanceGrantFailed` | `error: String` | After failed allowance grant |
+| `MessageSigned` | `message: String, signature: String, address: String` | After the player signs a message |
+| `MessageSignDeclined` | (none) | Player cancelled the sign dialog |
 | `BalancesRefreshed` | (none) | After balances update |
 
 **Balance Dictionary** (returned by `GetBalances()`):

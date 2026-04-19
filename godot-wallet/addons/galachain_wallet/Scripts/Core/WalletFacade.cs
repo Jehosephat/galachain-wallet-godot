@@ -22,6 +22,8 @@ public class WalletFacade
 	public event Action<string>? TransferFailed;
 	public event Action<string, string>? BurnCompleted;
 	public event Action<string>? BurnFailed;
+	public event Action<string, string, string, string>? AllowanceGranted;
+	public event Action<string>? AllowanceGrantFailed;
 	public event Action<string, string, string>? MessageSigned;
 	public event Action? MessageSignDeclined;
 	public event Action? BalancesRefreshed;
@@ -116,6 +118,22 @@ public class WalletFacade
 	}
 
 	/// <summary>
+	/// Asks the player to grant a Transfer or Burn allowance for a specific token.
+	/// Opens a pre-filled confirmation dialog; if the wallet is locked, prompts unlock first.
+	///
+	/// Subscribe to AllowanceGranted for success or AllowanceGrantFailed for errors.
+	/// </summary>
+	public void RequestGrantAllowance(string spender, string quantity, string tokenSymbol, AllowanceType type, int expiresInDays = 0)
+	{
+		if (_galaChainWallet == null)
+		{
+			return;
+		}
+
+		_galaChainWallet.RequestGrantAllowance(spender, quantity, tokenSymbol, type, expiresInDays);
+	}
+
+	/// <summary>
 	/// Asks the player to sign an arbitrary message (EIP-191 personal_sign).
 	/// Used for authentication challenges — the game server issues a message,
 	/// the player signs it, the server verifies the signature recovers to the
@@ -144,6 +162,8 @@ public class WalletFacade
 		wallet.TransferFailed += err => TransferFailed?.Invoke(err);
 		wallet.BurnCompleted += (qty, sym) => BurnCompleted?.Invoke(qty, sym);
 		wallet.BurnFailed += err => BurnFailed?.Invoke(err);
+		wallet.AllowanceGranted += (spender, qty, sym, type) => AllowanceGranted?.Invoke(spender, qty, sym, type);
+		wallet.AllowanceGrantFailed += err => AllowanceGrantFailed?.Invoke(err);
 		wallet.MessageSigned += (msg, sig, addr) => MessageSigned?.Invoke(msg, sig, addr);
 		wallet.MessageSignDeclined += () => MessageSignDeclined?.Invoke();
 		wallet.BalancesRefreshed += () => BalancesRefreshed?.Invoke();

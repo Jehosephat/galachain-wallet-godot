@@ -11,6 +11,7 @@ public partial class WalletDemoGame : Control
 	private Button _makePurchaseButton = null!;
 	private Button _burnGalaButton = null!;
 	private Button _loginButton = null!;
+	private Button _grantAllowanceButton = null!;
 	private Control _walletMount = null!;
 	private Label _gameStatusLabel = null!;
 	private Label _gameBalanceLabel = null!;
@@ -23,6 +24,7 @@ public partial class WalletDemoGame : Control
 		_makePurchaseButton = GetNode<Button>("%MakePurchaseButton");
 		_burnGalaButton = GetNode<Button>("%BurnGalaButton");
 		_loginButton = GetNode<Button>("%LoginButton");
+		_grantAllowanceButton = GetNode<Button>("%GrantAllowanceButton");
 		_walletMount = GetNode<Control>("%WalletMount");
 		_gameStatusLabel = GetNode<Label>("%GameStatusLabel");
 		_gameBalanceLabel = GetNode<Label>("%GameBalanceLabel");
@@ -33,6 +35,7 @@ public partial class WalletDemoGame : Control
 		_makePurchaseButton.Pressed += OnMakePurchasePressed;
 		_burnGalaButton.Pressed += OnBurnGalaPressed;
 		_loginButton.Pressed += OnLoginPressed;
+		_grantAllowanceButton.Pressed += OnGrantAllowancePressed;
 
 		CreateWalletFacade(GalaChainNetworkConfig.Mainnet());
 		UpdateStatus();
@@ -83,6 +86,14 @@ public partial class WalletDemoGame : Control
 		_walletFacade.MessageSignDeclined += () =>
 		{
 			GD.Print("[Demo] Login declined by user.");
+		};
+		_walletFacade.AllowanceGranted += (spender, qty, sym, type) =>
+		{
+			GD.Print($"[Demo] {type} allowance granted: {qty} {sym} to {spender}");
+		};
+		_walletFacade.AllowanceGrantFailed += err =>
+		{
+			GD.Print($"[Demo] Allowance grant failed: {err}");
 		};
 	}
 
@@ -140,6 +151,19 @@ public partial class WalletDemoGame : Control
 			$"Timestamp: {timestamp}";
 
 		_walletFacade.RequestSignMessage(message);
+		UpdateStatus();
+	}
+
+	private void OnGrantAllowancePressed()
+	{
+		_walletFacade.OpenWallet(_walletMount);
+		// Example: grant the game backend a 10 GALA transfer allowance that expires in 7 days.
+		_walletFacade.RequestGrantAllowance(
+			"client|5f58d8641586e117c5e68834",
+			"10",
+			"GALA",
+			AllowanceType.Transfer,
+			expiresInDays: 7);
 		UpdateStatus();
 	}
 

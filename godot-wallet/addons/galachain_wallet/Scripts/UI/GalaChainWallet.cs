@@ -52,6 +52,19 @@ public partial class GalaChainWallet : Control
 	private Label _burnSummaryLabel = null!;
 	private TokenBalanceModel? _selectedBurnToken;
 
+	private Button _grantAllowanceButton = null!;
+	private ConfirmationDialog _grantAllowanceDialog = null!;
+	private Label _grantAllowanceSelectedTokenLabel = null!;
+	private OptionButton _grantAllowanceTypeOption = null!;
+	private Label _grantAllowanceSpenderLabel = null!;
+	private LineEdit _grantAllowanceSpenderInput = null!;
+	private Label _grantAllowanceQuantityLabel = null!;
+	private LineEdit _grantAllowanceQuantityInput = null!;
+	private Label _grantAllowanceExpiresLabel = null!;
+	private LineEdit _grantAllowanceExpiresInput = null!;
+	private Label _grantAllowanceSummaryLabel = null!;
+	private TokenBalanceModel? _selectedGrantAllowanceToken;
+
 	private ConfirmationDialog _signMessageDialog = null!;
 	private RichTextLabel _signMessageContent = null!;
 	private string _pendingSignMessage = "";
@@ -66,6 +79,12 @@ public partial class GalaChainWallet : Control
 
 	private string? _pendingBurnQuantity;
 	private string? _pendingBurnSymbol;
+
+	private string? _pendingGrantAllowanceSpender;
+	private string? _pendingGrantAllowanceQuantity;
+	private string? _pendingGrantAllowanceSymbol;
+	private AllowanceType _pendingGrantAllowanceType = AllowanceType.Transfer;
+	private long _pendingGrantAllowanceExpiresUnixMs;
 
 	private const double IdleTimeoutSeconds = 300.0; // 5 minutes
 	private double _lastActivityTime;
@@ -82,6 +101,8 @@ public partial class GalaChainWallet : Control
 	public event Action<string>? TransferFailed;
 	public event Action<string, string>? BurnCompleted;
 	public event Action<string>? BurnFailed;
+	public event Action<string, string, string, string>? AllowanceGranted; // spender, qty, symbol, allowanceType ("Transfer"/"Burn")
+	public event Action<string>? AllowanceGrantFailed;
 	public event Action<string, string, string>? MessageSigned;
 	public event Action? MessageSignDeclined;
 	public event Action? BalancesRefreshed;
@@ -134,6 +155,17 @@ public partial class GalaChainWallet : Control
 		_burnQuantityLabel = GetNode<Label>("%BurnQuantityLabel");
 		_burnQuantityInput = GetNode<LineEdit>("%BurnQuantityInput");
 		_burnSummaryLabel = GetNode<Label>("%BurnSummaryLabel");
+		_grantAllowanceButton = GetNode<Button>("%GrantAllowanceButton");
+		_grantAllowanceDialog = GetNode<ConfirmationDialog>("%GrantAllowanceDialog");
+		_grantAllowanceSelectedTokenLabel = GetNode<Label>("%GrantAllowanceSelectedTokenLabel");
+		_grantAllowanceTypeOption = GetNode<OptionButton>("%GrantAllowanceTypeOption");
+		_grantAllowanceSpenderLabel = GetNode<Label>("%GrantAllowanceSpenderLabel");
+		_grantAllowanceSpenderInput = GetNode<LineEdit>("%GrantAllowanceSpenderInput");
+		_grantAllowanceQuantityLabel = GetNode<Label>("%GrantAllowanceQuantityLabel");
+		_grantAllowanceQuantityInput = GetNode<LineEdit>("%GrantAllowanceQuantityInput");
+		_grantAllowanceExpiresLabel = GetNode<Label>("%GrantAllowanceExpiresLabel");
+		_grantAllowanceExpiresInput = GetNode<LineEdit>("%GrantAllowanceExpiresInput");
+		_grantAllowanceSummaryLabel = GetNode<Label>("%GrantAllowanceSummaryLabel");
 		_signMessageDialog = GetNode<ConfirmationDialog>("%SignMessageDialog");
 		_signMessageContent = GetNode<RichTextLabel>("%SignMessageContent");
 
@@ -154,6 +186,12 @@ public partial class GalaChainWallet : Control
 		_burnButton.Pressed += OnBurnPressed;
 		_burnDialog.Confirmed += OnBurnDialogConfirmed;
 		_burnQuantityInput.TextChanged += OnBurnInputChanged;
+		_grantAllowanceButton.Pressed += OnGrantAllowancePressed;
+		_grantAllowanceDialog.Confirmed += OnGrantAllowanceDialogConfirmed;
+		_grantAllowanceSpenderInput.TextChanged += OnGrantAllowanceInputChanged;
+		_grantAllowanceQuantityInput.TextChanged += OnGrantAllowanceInputChanged;
+		_grantAllowanceExpiresInput.TextChanged += OnGrantAllowanceInputChanged;
+		_grantAllowanceTypeOption.ItemSelected += _ => UpdateGrantAllowanceSummary();
 		_signMessageDialog.Confirmed += OnSignMessageConfirmed;
 		_signMessageDialog.Canceled += OnSignMessageCanceled;
 
@@ -164,6 +202,7 @@ public partial class GalaChainWallet : Control
 		_importMnemonicInput.TextSubmitted += _ => { _importMnemonicDialog.Hide(); OnImportMnemonicConfirmed(); };
 		_transferQuantityInput.TextSubmitted += _ => { _transferDialog.Hide(); OnTransferDialogConfirmed(); };
 		_burnQuantityInput.TextSubmitted += _ => { _burnDialog.Hide(); OnBurnDialogConfirmed(); };
+		_grantAllowanceExpiresInput.TextSubmitted += _ => { _grantAllowanceDialog.Hide(); OnGrantAllowanceDialogConfirmed(); };
 
 		_uiReady = true;
 		_lastActivityTime = Time.GetTicksMsec() / 1000.0;
@@ -223,6 +262,11 @@ public partial class GalaChainWallet : Control
 		{
 			_burnButton.Disabled = true;
 		}
+
+		if (_grantAllowanceButton != null)
+		{
+			_grantAllowanceButton.Disabled = true;
+		}
 	}
 
 	private bool EnsureService()
@@ -281,6 +325,11 @@ public partial class GalaChainWallet : Control
 		if (_burnButton != null)
 		{
 			_burnButton.Disabled = !hasWallet || !isUnlocked;
+		}
+
+		if (_grantAllowanceButton != null)
+		{
+			_grantAllowanceButton.Disabled = !hasWallet || !isUnlocked;
 		}
 
 		RefreshBalances();

@@ -250,6 +250,28 @@ Six fixes applied in one pass:
 
 ## 2026-04-18
 
+### GrantAllowance support (Transfer and Burn allowances)
+- **Problem**: Games often need the player to pre-authorize the game backend (or another player) to move/burn tokens on their behalf — e.g. in-game marketplaces, escrow, or season-pass burn schedules. No way to do this from the wallet.
+- **Changes**:
+  - New models: `AllowanceType` enum (Use=0, Lock=1, Spend=2, Transfer=3, Mint=4, Swap=5, Burn=6 — values match the on-chain enum), `GalaGrantAllowanceRequest` (DTO with `allowanceType`, `dtoExpiresAt`, `expires`, `quantities[]`, `tokenInstance`, `uniqueKey`, `uses`, `signature`), `GrantAllowanceQuantity` (`{ user, quantity }`), `GrantAllowanceDraft` (UI-facing with list of spenders).
+  - `GrantAllowancePolicy` — allowlists `AllowanceType.Transfer` and `AllowanceType.Burn` only; refuses `Mint/Swap/Lock/Spend/Use`. Validates spender format (`eth|` / `client|`), quantity > 0, expiration in the future (or 0 = never). Registered in `DtoPolicyRegistry`.
+  - `TransactionContext` gained `AllowanceType` and `ExpiresUnixMs` fields so the shared validation pipeline can handle operation-specific data.
+  - `GalaSigner.SignGrantAllowance` uses the shared `SignPayload` helper. Field list: `allowanceType, dtoExpiresAt, expires, quantities, tokenInstance, uniqueKey, uses` (signature excluded by the canonical serializer).
+  - `IGalaTransferClient.GrantAllowanceAsync` via `PostSignedAsync`; `IGalaChainClient.DryRunGrantAllowanceAsync` uses the existing shared dry-run helper.
+  - `GalaChainNetworkConfig.GrantAllowanceUrl` computed property (`/GrantAllowance`).
+  - `IWalletService.ValidateGrantAllowance` / `PreviewGrantAllowanceAsync` / `SubmitGrantAllowanceAsync` — per-spender validation, 3-min `dtoExpiresAt`, fresh `uniqueKey`. Internal API is list-based (`List<GrantAllowanceSpender>`) so multi-spender grants remain possible, but the UI is single-spender.
+  - `WalletService.BuildGrantAllowanceRequest` — **defaults `uses` to the granted `quantity`** when not explicitly set, per the feature spec. This gives a permissive default where the allowance is capped by quantity rather than usage count.
+  - New UI partial class `GalaChainWallet.Allowance.cs`: Grant Allowance button (in Actions panel), dialog with `OptionButton` for Transfer/Burn, spender input, quantity input, "Expires in (days)" input (blank = never), summary with live dry-run fee preview.
+  - `expires` is captured in the dialog as a number of days from now and converted to a unix-ms timestamp. Summary displays the resolved date in UTC for clarity.
+  - Pending-allowance stash/consume follows the transfer/burn pattern — if the wallet is locked when `RequestGrantAllowance` is called, the request is replayed after unlock.
+  - New events on `GalaChainWallet`: `AllowanceGranted(spender, qty, symbol, allowanceType)` and `AllowanceGrantFailed(error)`. Forwarded through `WalletFacade` and re-emitted as signals on `WalletBridge`.
+  - `WalletFacade.RequestGrantAllowance(spender, quantity, symbol, AllowanceType, expiresInDays)` for C# games.
+  - `WalletBridge.RequestGrantAllowance(spender, qty, symbol, allowanceTypeInt, expiresInDays)` plus `ALLOWANCE_TYPE_TRANSFER` and `ALLOWANCE_TYPE_BURN` constants for GDScript games.
+  - Demo: added "Grant Transfer Allowance (10 GALA)" button, wired to emit a 7-day allowance to the demo game-backend address.
+- **Scope note**: Granting a Transfer or Burn allowance is a player-signed op on the player's own tokens — in scope per the client-side boundary. Granting Mint allowances is intentionally refused (Mint authority must never ship in client code).
+- **DTO shape** (canonical JSON, alphabetical): `allowanceType (number), dtoExpiresAt, expires, quantities (array of {quantity, user}), tokenInstance (flat {additionalKey, category, collection, instance, type}), uniqueKey, uses (BigNumber as string)`. Endpoint: `POST /api/asset/token-contract/GrantAllowance`.
+- **Files**: `AllowanceType.cs` (new), `GalaGrantAllowanceRequest.cs` (new), `GrantAllowanceDraft.cs` (new), `GrantAllowancePolicy.cs` (new), `GalaChainWallet.Allowance.cs` (new), `GalaChainNetworkConfig.cs`, `ITransactionPolicy.cs`, `DtoPolicyRegistry.cs`, `GalaSigner.cs`, `IGalaTransferClient.cs`, `GalaTransferClient.cs`, `IGalaChainClient.cs`, `GalaChainClient.cs`, `IWalletService.cs`, `WalletService.cs`, `WalletFacade.cs`, `WalletBridge.cs`, `GalaChainWallet.cs`, `GalaChainWallet.WalletActions.cs`, `GalaChainWallet.tscn`, `WalletDemoGame.cs`, `WalletDemoGame.tscn`, `Godot-Wallet.Tests.csproj`, `INTEGRATION_GUIDE.md`, `AGENTS.md`.
+
 ### Expose `RefreshBalances()` on WalletBridge for GDScript
 - **Problem**: `WalletFacade.RefreshBalancesAsync()` had no GDScript passthrough on `WalletBridge`. GDScript games couldn't trigger a balance refresh — only the wallet UI's internal refresh button could. This is needed for games that mint/reward server-side and want the client to pick up the new balances.
 - **Change**: Added `RefreshBalances()` fire-and-forget method on `WalletBridge` that calls `_facade.RefreshBalancesAsync()`. GDScript callers subscribe to the existing `BalancesRefreshed` signal for completion.

@@ -11,6 +11,7 @@ public class DtoPolicyRegistry
 	{
 		Register(new TransferTokenPolicy());
 		Register(new BurnTokensPolicy());
+		Register(new GrantAllowancePolicy());
 	}
 
 	public void Register(ITransactionPolicy policy)

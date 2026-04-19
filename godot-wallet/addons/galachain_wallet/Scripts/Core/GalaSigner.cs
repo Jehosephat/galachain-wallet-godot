@@ -35,6 +35,22 @@ public class GalaSigner
 		request.signature = SignPayload(payloadToSign, privateKey);
 	}
 
+	public void SignGrantAllowance(GalaGrantAllowanceRequest request, string privateKey)
+	{
+		var payloadToSign = new
+		{
+			allowanceType = request.allowanceType,
+			dtoExpiresAt = request.dtoExpiresAt,
+			expires = request.expires,
+			quantities = request.quantities,
+			tokenInstance = request.tokenInstance,
+			uniqueKey = request.uniqueKey,
+			uses = request.uses
+		};
+
+		request.signature = SignPayload(payloadToSign, privateKey);
+	}
+
 	/// <summary>
 	/// Signs an arbitrary message using EIP-191 personal_sign format.
 	/// The message is prefixed with "\x19Ethereum Signed Message:\n{length}" before hashing,

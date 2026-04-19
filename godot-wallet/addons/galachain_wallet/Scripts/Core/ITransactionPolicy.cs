@@ -14,6 +14,8 @@ public class TransactionContext
 	public string ToAddress { get; set; } = "";
 	public string Quantity { get; set; } = "";
 	public decimal AvailableBalance { get; set; }
+	public int AllowanceType { get; set; } = -1;
+	public long ExpiresUnixMs { get; set; }
 }
 
 public class ValidationResult

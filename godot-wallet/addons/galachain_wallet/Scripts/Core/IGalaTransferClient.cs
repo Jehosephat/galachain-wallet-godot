@@ -7,4 +7,5 @@ public interface IGalaTransferClient
 {
 	Task<NetworkResult<string>> TransferAsync(GalaTransferTokenRequest request, string walletAlias);
 	Task<NetworkResult<string>> BurnTokensAsync(GalaBurnTokensRequest request);
+	Task<NetworkResult<string>> GrantAllowanceAsync(GalaGrantAllowanceRequest request);
 }

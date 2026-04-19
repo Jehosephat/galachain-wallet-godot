@@ -132,6 +132,22 @@ public class GalaChainClient : IGalaChainClient
 		return await DryRunAsync("BurnTokens", signerAddress, dto);
 	}
 
+	public async Task<NetworkResult<TransferPreviewResult>> DryRunGrantAllowanceAsync(GalaGrantAllowanceRequest request, string signerAddress)
+	{
+		var dto = new
+		{
+			request.allowanceType,
+			request.expires,
+			request.quantities,
+			request.tokenInstance,
+			uniqueKey = $"dryrun-{Guid.NewGuid()}",
+			request.uses,
+			request.dtoExpiresAt
+		};
+
+		return await DryRunAsync("GrantAllowance", signerAddress, dto);
+	}
+
 	private async Task<NetworkResult<TransferPreviewResult>> DryRunAsync(string method, string signerAddress, object dto)
 	{
 		var wrapper = new

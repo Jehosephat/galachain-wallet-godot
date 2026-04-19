@@ -122,6 +122,11 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Burn"
 
+[node name="GrantAllowanceButton" type="Button" parent="MarginContainer/VBoxContainer/ActionsPanel/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Grant Allowance"
+
 [node name="BalancesPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer" unique_id=1755233513]
 layout_mode = 2
 size_flags_vertical = 3
@@ -324,6 +329,71 @@ placeholder_text = "Quantity"
 [node name="BurnSummaryLabel" type="Label" parent="BurnDialog/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
+
+[node name="GrantAllowanceDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "Grant Allowance"
+size = Vector2i(540, 320)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="GrantAllowanceDialog"]
+offset_right = 520.0
+offset_bottom = 280.0
+theme_override_constants/separation = 8
+
+[node name="GrantAllowanceTitleLabel" type="Label" parent="GrantAllowanceDialog/VBoxContainer"]
+layout_mode = 2
+text = "Grant an allowance on a token you own. The spender will be able to use that token on your behalf up to the quantity granted."
+autowrap_mode = 2
+
+[node name="GrantAllowanceSelectedTokenLabel" type="Label" parent="GrantAllowanceDialog/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="GrantAllowanceTypeRow" type="HBoxContainer" parent="GrantAllowanceDialog/VBoxContainer"]
+layout_mode = 2
+
+[node name="GrantAllowanceTypeLabel" type="Label" parent="GrantAllowanceDialog/VBoxContainer/GrantAllowanceTypeRow"]
+layout_mode = 2
+text = "Allowance type:"
+
+[node name="GrantAllowanceTypeOption" type="OptionButton" parent="GrantAllowanceDialog/VBoxContainer/GrantAllowanceTypeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="GrantAllowanceSpenderLabel" type="Label" parent="GrantAllowanceDialog/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Spender"
+
+[node name="GrantAllowanceSpenderInput" type="LineEdit" parent="GrantAllowanceDialog/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "eth|... or client|..."
+
+[node name="GrantAllowanceQuantityLabel" type="Label" parent="GrantAllowanceDialog/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Quantity"
+
+[node name="GrantAllowanceQuantityInput" type="LineEdit" parent="GrantAllowanceDialog/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Quantity"
+
+[node name="GrantAllowanceExpiresLabel" type="Label" parent="GrantAllowanceDialog/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Expires in (days, blank = never)"
+
+[node name="GrantAllowanceExpiresInput" type="LineEdit" parent="GrantAllowanceDialog/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "e.g. 30"
+
+[node name="GrantAllowanceSummaryLabel" type="Label" parent="GrantAllowanceDialog/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 2
 
 [node name="SignMessageDialog" type="ConfirmationDialog" parent="."]
 unique_name_in_owner = true
