@@ -3,7 +3,7 @@ namespace GalaWallet.Models;
 public class GalaChainNetworkConfig
 {
 	public const string MainnetUrl = "https://gateway-mainnet.galachain.com/api";
-	public const string TestnetUrl = "https://gateway-testnet.galachain.com/api";
+	public const string TestnetUrl = "https://galachain-gateway-chain-platform-stage-chain-platform-eks.stage.galachain.com/api";
 
 	public string ApiBaseUrl { get; set; } = MainnetUrl;
 	public string Channel { get; set; } = "asset";
@@ -26,16 +26,11 @@ public class GalaChainNetworkConfig
 		Contract = "token-contract"
 	};
 
-	/// <summary>
-	/// Default GalaChain testnet configuration.
-	/// Testnet contract deployments use channel "testnet01" and a contract name
-	/// derived from the deployment hash (e.g., "gc-a9b8b472...-GalaChainToken").
-	/// Update the Contract value here if the testnet deployment changes.
-	/// </summary>
+	/// <summary>Default GalaChain testnet configuration.</summary>
 	public static GalaChainNetworkConfig Testnet() => new()
 	{
 		ApiBaseUrl = TestnetUrl,
-		Channel = "testnet01",
-		Contract = "gc-a9b8b472b035c0510508c248d1110d3162b7e5f4-GalaChainToken"
+		Channel = "asset",
+		Contract = "token-contract"
 	};
 }

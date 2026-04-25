@@ -312,7 +312,7 @@ _wallet = new WalletFacade(GalaChainNetworkConfig.Testnet());
 // Or build a custom config explicitly
 var config = new GalaChainNetworkConfig
 {
-    ApiBaseUrl = "https://gateway-testnet.galachain.com/api",
+    ApiBaseUrl = "https://galachain-gateway-chain-platform-stage-chain-platform-eks.stage.galachain.com/api",
     Channel = "asset",
     Contract = "token-contract"
 };

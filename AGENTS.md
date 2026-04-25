@@ -171,7 +171,7 @@ Mainnet is the default. Games can target testnet or a custom gateway by providin
 ## GalaChain API Details
 
 - **Gateway (mainnet)**: `https://gateway-mainnet.galachain.com/api`
-- **Gateway (testnet)**: `https://gateway-testnet.galachain.com/api`
+- **Gateway (testnet)**: `https://galachain-gateway-chain-platform-stage-chain-platform-eks.stage.galachain.com/api`
 - **Balance fetch**: `POST /asset/token-contract/FetchBalances` — body: `{ owner: "eth|<address>" }`
 - **Transfer submit**: `POST /asset/token-contract/TransferToken` — body: signed DTO
 - **Dry-run**: `POST /asset/token-contract/DryRun` — body: `{ method: "TransferToken", signerAddress: "eth|...", dto: { ...unsigned transfer fields... } }`
